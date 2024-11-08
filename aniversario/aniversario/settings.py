@@ -127,3 +127,17 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'larissa@sooretama.net'
+EMAIL_HOST_PASSWORD = ''
+
+# Celery Configuration
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # URL do broker (redis)
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'  # Backend de resultados
+CELERY_TIMEZONE = 'America/Sao_Paulo'  # Ajuste para seu fuso horário
