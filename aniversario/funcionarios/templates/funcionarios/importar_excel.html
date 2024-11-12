@@ -1,7 +1,8 @@
-<h2>Importar Funcionários</h2>
-<form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    <label for="excel_file">Arquivo Excel:</label>
-    <input type="file" name="excel_file" required>
-    <button type="submit">Importar</button>
-</form>
+{% if messages %}
+<ul class="messages">
+    {% for mensage in messages %}
+    <li {% if menssage.tags %} class="{{mensage.tags}}"{% endif %}>
+        {{message}}
+    </li>
+</ul>
+{% endif  %}

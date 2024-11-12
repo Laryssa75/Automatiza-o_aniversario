@@ -57,7 +57,9 @@ ROOT_URLCONF = 'aniversario.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            BASE_DIR / 'funcionarios/templates',
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -106,7 +108,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'pt-br'
 
 TIME_ZONE = 'UTC'
 
@@ -120,6 +122,10 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+STATICFILES_DIRS = [
+    BASE_DIR / 'funcionarios/static',
+]
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
@@ -132,7 +138,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'larissa@sooretama.net'
+EMAIL_HOST_USER = 'larissasooretama@gmail.com'
 EMAIL_HOST_PASSWORD = ''
 
 # Celery Configuration
@@ -141,3 +147,36 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'  # Backend de resultados
 CELERY_TIMEZONE = 'America/Sao_Paulo'  # Ajuste para seu fuso horário
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'email_tasks.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}
+
+SESSION_EXPIRE_AT_BROWSER_COSE = True
+#redireciona para a página de login do admin, se não tiver autenticado
+LOGIN_URL = '/admin/login/'
+
+from django.core.mail import send_mail
+
+send_mail(
+    'Teste de E-mail',
+    'Este é um e-mail de teste.',
+    'larissasooretama@gmail.com',
+    ['alex@sooretama.net'],
+    fail_silently=False,
+)

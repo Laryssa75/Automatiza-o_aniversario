@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página Inicial</title>
+    <!-- Carregar o arquivo CSS -->
+     {% load static %}
+     <link rel="stylesheet" href="{% static 'funcionarios/styles.css' %}">
+</head>
+<body>
+
+<div class="container">
+    <h1>Bem-vindos ao Sistema de Automatização de envio de emial de aniversário</h1>
+    <p style="font-size: 18px; text-align: center;">Clique no botão para acessar o painel de login</p>
+    <div class="button-container">
+        <a href="{% url 'logout_and_redirect' %}" class="button">Ir para o Login</a>
+    </div>
+
+</div>
+
+</body>
+</html>
