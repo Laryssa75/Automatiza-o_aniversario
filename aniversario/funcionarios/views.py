@@ -1,13 +1,15 @@
 import pandas as pd
+import yagmail
 from django.shortcuts import render, redirect
 from .models import Funcionario
 from django.db import models
 from .tasks import enviar_email_aniversario
 from django.http import HttpResponse
-import yagmail
 from django.contrib.auth import logout
 from .forms import FuncionarioForm, UploadExcelForm
 from django.contrib import messages
+from django.http import JsonResponse
+from .tasks import enviar_email_aniversario
 
 def enviar_email_teste(request):
     try:
@@ -79,3 +81,7 @@ def importar_funcionarios(request):
 def logout_and_redirect(request):
     logout(request)
     return redirect('admin:login')
+
+def enviar_emails_aniversariantes_view(request):
+    enviar_email_aniversario.delay() #Executa a tarefa em background com Celery
+    return JsonResponse({"status": "sucess", "message": "E-mails de aniversariantes enviados."})

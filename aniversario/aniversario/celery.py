@@ -4,6 +4,7 @@
 from __future__ import absolute_import, unicode_literals
 import os
 from celery import Celery
+from celery.schedules import crontab
 
 #Definindo o módulo Django para o Celery usar
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'aniversario.settings')
@@ -20,3 +21,9 @@ app.autodiscover_tasks()
 def debug_task(self):
     print(f'Request: {self.request!r}')
 
+# CELERY_BEAT_SCHEDULE = {
+#     'enviar-emails-aniversariantes-diariamente':{
+#         'task': 'funcionarios.tasks.enviar_emails_aniversariantes',
+#         'schedule': crontab(hour=8, minute=0),
+#     },
+# }
