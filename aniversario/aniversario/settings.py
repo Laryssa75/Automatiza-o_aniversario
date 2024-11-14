@@ -148,6 +148,7 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'  # Backend de resultados
 CELERY_TIMEZONE = 'America/Sao_Paulo'  # Ajuste para seu fuso horário
 
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -155,14 +156,15 @@ LOGGING = {
         'file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': 'email_tasks.log',
+            'filename': 'email_log.log',
+            'mode': 'w',
         },
     },
     'loggers': {
         'django': {
             'handlers': ['file'],
             'level': 'DEBUG',
-            'propagate': False,
+            'propagate': True,
         },
     },
 }
@@ -171,12 +173,12 @@ SESSION_EXPIRE_AT_BROWSER_COSE = True
 #redireciona para a página de login do admin, se não tiver autenticado
 LOGIN_URL = '/admin/login/'
 
-from django.core.mail import send_mail
+# from django.core.mail import send_mail
 
-send_mail(
-    'Teste de E-mail',
-    'Este é um e-mail de teste.',
-    'larissasooretama@gmail.com',
-    ['alex@sooretama.net'],
-    fail_silently=False,
-)
+# send_mail(
+#     'Teste de E-mail',
+#     'Este é um e-mail de teste.',
+#     'larissasooretama@gmail.com',
+#     ['alex@sooretama.net'],
+#     fail_silently=False,
+# )
