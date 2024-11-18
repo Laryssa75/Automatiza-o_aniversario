@@ -14,28 +14,27 @@ def enviar_email_aniversario():
         data_nascimento__month= today.month,
         data_nascimento__day= today.day
     )
+
+    logger.info(f"Buscando aniversariantes: {today}")
+    print(f"Buscando aniversariantes: {today}")
     
-    if not funcionario.exists():
+    if not aniversariantes.exists():
         logger.info("Nunhum aniversariante encontrado para o dia de hoje.")
         print("Nenhuma anversariante encontrado para o dia de hoje.")
+        return
 
     for funcionario in aniversariantes:
-  
+        try:
+            logger.info(f"Enviando e-mail para {funcionario.nome}")
+            print(f"Enviando e-mail para {funcionario.nome}")
 
-        enviar(destinatario=funcionario.email, nome_destinatario=funcionario.nome)
-        print(f"Envio do email{funcionario.email}, enviado com sucesso.")
-           
-# def enviar_email_aniversario():
-#     try:
-#      # Configuração do yagmail
-#         yag = yagmail.SMTP('larissasoortama@gmail.com', 'yjmqrvdepyfunish')
-        
-#         # Enviar e-mail para um destinatário de exemplo
-#         yag.send('larissa@sooretama.net', 'Assunto', 'Este é um e-mail de teste.')
-        
-#         print("E-mail enviado com sucesso!")
-    
-#     except Exception as e:
-#         print(f"Erro ao enviar e-mail: {e}")
+            enviar(destinatario=funcionario.email, nome_destinatario=funcionario.nome, foto = None)
+            
+            print(f"Envio do email{funcionario.email}, enviado com sucesso.")
+            logger.info(f"Envio de e-mail {funcionario.email}, enviado com sucesso") 
+
+        except Exception as e:
+            logger.error(f"Erro ao enviar e-mail para {funcionario.nome}:  {str(e)}")
+            print(f"Erro ao enviar e-mail para {funcionario.nome}:  {str(e)}")          
 
     

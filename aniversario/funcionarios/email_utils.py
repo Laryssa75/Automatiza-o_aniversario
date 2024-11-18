@@ -1,10 +1,15 @@
 import yagmail
 import logging
+import os
 from django.conf import settings
 from django.template.loader import render_to_string
 
 def enviar(destinatario, nome_destinatario, foto = None):
     try:
+        #Verifica se a foto foi fornecida e se o caminho da foto é valido/existe
+        if foto and not os.path.exists(foto):
+            raise ValueError("O caminho da foto não existe.")
+
         # Configura o SMTP com yagmail usando as credenciais do settings.py
         yag = yagmail.SMTP(settings.EMAIL_HOST_USER, settings.EMAIL_HOST_PASSWORD)
 
