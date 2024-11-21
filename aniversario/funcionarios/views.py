@@ -1,18 +1,18 @@
 import pandas as pd
-import yagmail
+import django_rq
 from django.shortcuts import render, redirect
 from .models import Funcionario
 from django.db import models
 from funcionarios.tasks import enviar_email_aniversario
-from django.http import HttpResponse
 from django.contrib.auth import logout
 from .forms import FuncionarioForm, UploadExcelForm
 from django.contrib import messages
 from django.http import JsonResponse
 
+queue = django_rq.get('default')
 
 def enviar_emails_aniversariantes_view(request):
-    enviar_email_aniversario.delay() #Executa a tarefa em background com Celery
+    enviar_email_aniversario()
     return JsonResponse({"status": "sucess", "message": "E-mails de aniversariantes enviados."})
 
 def home(request):
@@ -25,18 +25,28 @@ def importar_funcionarios(request):
     form_import = UploadExcelForm()
 
     if request.method == 'POST':
-        if 'manual' in request.POST:  #Envio de dados manual
+        #Envio de dados manual
+        if 'manual' in request.POST:  
             form_funcionario = FuncionarioForm(request.POST)
             if form_funcionario.is_valid():
-                form_funcionario.save()
+
+                #Obtem o maior valor existente de cbo
+                max_cbo = Funcionario.objects.aggregate(models.Max('cbo'))['cbo__max']
+                next_cbo = max_cbo + 1 if max_cbo is not None else 1
+
+                funcionario = form_funcionario.save(commit=False)
+                funcionario.cbo = next_cbo #Atribui o próximo valor de cbo
+                form_funcionario.save() #Salva o funcionario
 
                 #Alteração para que o envio do email seja imediato quando se insere os dados dos funcionários via web
-                enviar_email_aniversario.apply_async()
+                #enviar_email_aniversario.apply_async()
+                queue.enqueue(enviar_email_aniversario)
 
                 messages.success(request, "Funcinario adicionado com sucesso!")
                 return redirect('listar_funcionarios')
     
-    if 'import' in request.method == 'POST' and request.FILES.get('excel_file'):
+    #Se for envio de dados via arquivo excel
+    elif request.FILES.get('excel_file'):
         form_import = UploadExcelForm(request.POST, request.FILES)
         if form_import.is_valid():
             excel_file = request.FILES['excel_file']
@@ -57,13 +67,14 @@ def importar_funcionarios(request):
                         cbo=next_cbo #atribui o próximo valor de id sequencial
                     )
 
-                    next_cbo += 1 #incrementa para o próximo registro
+                    #next_cbo += 1 #incrementa para o próximo registro
 
                 messages.success(request, "Funcionarios importados com sucesso!")
                 print("Funcionarios importados com sucesso!")
 
                 #Chama a tarefa celery para envio de email de aniversario
-                enviar_email_aniversario.apply_async()
+                #enviar_email_aniversario.apply_async()
+                queue.enqueue(enviar_email_aniversario)
                 return redirect('listar_funcionarios')
             
             except Exception as e:

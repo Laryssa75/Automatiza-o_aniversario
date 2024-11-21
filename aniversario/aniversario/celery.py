@@ -3,8 +3,6 @@
 
 from __future__ import absolute_import, unicode_literals
 import os
-import django
-from django.conf import settings
 from celery import Celery
 from celery.schedules import crontab
 
@@ -21,13 +19,15 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 #Carrega as tarefas de todos os aplicativos registrados
 app.autodiscover_tasks()
 
+print("Tarefas disponiveis:", app.tasks)
+
 app.conf.broker_connection_retry_on_startup = True
 
 #Configurando o celery beat para rodar a tarefa todoso os dias
 app.conf.beat_schedule = {
     'enviar-email-diariamente': {
         'task': 'funcionarios.tasks.enviar_email_aniversario', #Referencia para a sua função celery
-        'schedule': crontab(minute=0, hour= 9), # Todos os dias as 9 horas da manhã AM
+        'schedule': crontab(minute=15, hour= 18), # Todos os dias as 9 horas da manhã AM
     },
 }
 

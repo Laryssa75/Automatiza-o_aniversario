@@ -1,13 +1,16 @@
-from celery import shared_task
+#from celery import shared_task
 from .models import Funcionario
 from django.utils import timezone
 from .email_utils import enviar
+from django.core.mail import enviar
 import logging
+import django_rq
 
 logger = logging.getLogger(__name__)
 
-@shared_task
+#@shared_task de uso apenas do celery
 def enviar_email_aniversario():
+    print("Tarefa executada no enviar email")
     # Filtra funcionários com aniversários no dia atual
     today = timezone.now().date()
     aniversariantes = Funcionario.objects.filter(
@@ -25,16 +28,36 @@ def enviar_email_aniversario():
 
     for funcionario in aniversariantes:
         try:
+
+            #prepara os dados necessários para o envio do e-mail
+            dados_envio = {
+                "destinatario": funcionario.email,
+                "nome_destinatario": funcionario.nome,
+                "foto": funcionario.foto.path if funcionario.foto else None,
+            }
+
             logger.info(f"Enviando e-mail para {funcionario.nome}")
             print(f"Enviando e-mail para {funcionario.nome}")
 
-            enviar(destinatario=funcionario.email, nome_destinatario=funcionario.nome, foto = None)
-            
-            print(f"Envio do email{funcionario.email}, enviado com sucesso.")
-            logger.info(f"Envio de e-mail {funcionario.email}, enviado com sucesso") 
+            sucesso = enviar(
+                destinatario=dados_envio["destinatario"],
+                nome_destinatario=dados_envio["nome_destinatario"],
+                foto=dados_envio["foto"],
+            )
+
+            if sucesso:
+                logger.info(f"E-mail enviado com sucesso para {funcionario.email}")
+                print(f"E-mail enviado com sucesso para {funcionario.email}")
+            else:
+                logger.error(f"Falha ao enviar e-mail para {funcionario.email}")
+                print(f"Falha ao enviar e-mail para {funcionario.email}")
 
         except Exception as e:
             logger.error(f"Erro ao enviar e-mail para {funcionario.nome}:  {str(e)}")
             print(f"Erro ao enviar e-mail para {funcionario.nome}:  {str(e)}")          
 
-    
+
+
+
+
+

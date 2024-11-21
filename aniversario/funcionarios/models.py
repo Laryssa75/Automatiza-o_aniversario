@@ -1,5 +1,6 @@
 from django.db import models
 
+
 # Create your models here.
 
 class Funcionario(models.Model):
@@ -16,7 +17,7 @@ class Funcionario(models.Model):
         if not self.cbo:
             max_cbo = Funcionario.objects.aggregate(models.Max('cbo'))['cbo__max']
             self.cbo = max_cbo +1 if max_cbo else 1
-        super().save('*args, **kwargs')
+        super().save(*args, **kwargs)
 
 
     def __str__(self):
