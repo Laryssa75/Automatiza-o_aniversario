@@ -1,28 +1,31 @@
 import pandas as pd
-import django_rq
 from django.shortcuts import render, redirect
 from .models import Funcionario
 from django.db import models
-from funcionarios.tasks import enviar_email_aniversario
 from django.contrib.auth import logout
 from .forms import FuncionarioForm, UploadExcelForm
 from django.contrib import messages
 from django.http import JsonResponse
+from .tasks import enviar_email_aniversario
+from django.views.decorators.csrf import csrf_exempt
 
-queue = django_rq.get('default')
 
 def enviar_emails_aniversariantes_view(request):
-    enviar_email_aniversario()
+
+    enviar_email_aniversario().send()
     return JsonResponse({"status": "sucess", "message": "E-mails de aniversariantes enviados."})
 
 def home(request):
     #return HttpResponse("Página inicial do app funcionários")
     return render(request, 'funcionarios/home.html')
 
+@csrf_exempt  #caso queira permitir chamadas sem o token CSRF (apenas se necessario)
 def importar_funcionarios(request):
     #Formulario de preenchimento manual e upload de arquivo
     form_funcionario = FuncionarioForm()
     form_import = UploadExcelForm()
+
+    tarefa_enfileirada = False #Variável para rastrear se a tarefa será enfileirada
 
     if request.method == 'POST':
         #Envio de dados manual
@@ -40,13 +43,15 @@ def importar_funcionarios(request):
 
                 #Alteração para que o envio do email seja imediato quando se insere os dados dos funcionários via web
                 #enviar_email_aniversario.apply_async()
-                queue.enqueue(enviar_email_aniversario)
+                #queue.enqueue(enviar_email_aniversario)
+
+                tarefa_enfileirada = True #Marca que a tarefa será enfileirada
 
                 messages.success(request, "Funcinario adicionado com sucesso!")
                 return redirect('listar_funcionarios')
     
     #Se for envio de dados via arquivo excel
-    elif request.FILES.get('excel_file'):
+    if 'import' in request.method == 'POST' and request.FILES.get('excel_file'):
         form_import = UploadExcelForm(request.POST, request.FILES)
         if form_import.is_valid():
             excel_file = request.FILES['excel_file']
@@ -67,23 +72,29 @@ def importar_funcionarios(request):
                         cbo=next_cbo #atribui o próximo valor de id sequencial
                     )
 
-                    #next_cbo += 1 #incrementa para o próximo registro
+                tarefa_enfileirada = True #Marca que a tarefa será enfileirada
 
                 messages.success(request, "Funcionarios importados com sucesso!")
                 print("Funcionarios importados com sucesso!")
+                return redirect('listar_funcionarios')
 
                 #Chama a tarefa celery para envio de email de aniversario
                 #enviar_email_aniversario.apply_async()
-                queue.enqueue(enviar_email_aniversario)
-                return redirect('listar_funcionarios')
+                # queue.enqueue(enviar_email_aniversario)
             
             except Exception as e:
                 messages.error(request, f"Erro ao importar: {e}")
                 print("Erro ao importar!")
 
+
+
+    # ** Enfileira a tarefa após as operações de criação **
+    if tarefa_enfileirada:
+        enviar_email_aniversario.send()
+
     return render(request, 'funcionarios/importar_excel.html', {
         'form_funcionario': form_funcionario,
-        'form_import': form_import
+        'form_import': form_import,
     })
 
 def logout_and_redirect(request):

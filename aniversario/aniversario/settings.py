@@ -37,7 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django_celery_beat',
+    #'django_celery_beat',
+    #'django_rq',
 
     #Apps do projeto
     'funcionarios', #App para gerenciar funcionarios e enviar emails
@@ -140,7 +141,7 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'larissasooretama@gmail.com'
-EMAIL_HOST_PASSWORD = ''
+EMAIL_HOST_PASSWORD = 'yjmqrvdepyfunish'
 
 # Celery Configuration
 CELERY_BROKER_URL = 'redis://localhost:6379/0'  # URL do broker (redis)
@@ -148,6 +149,22 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'  # Backend de resultados
 CELERY_TIMEZONE = 'America/Sao_Paulo'  # Ajuste para seu fuso horário
+
+REDIS_URL = "redis://localhost:6379"
+
+# RQ_QUEUES = {
+#     'default': {
+#         'HOST': 'localhost',  # Endereço do servidor Redis
+#         'PORT': 6379,         # Porta do servidor Redis
+#         'DB': 0,              # Banco de dados do Redis
+#         'DEFAULT_TIMEOUT': 500,
+#     }
+# }
+
+DRAMATIQ_BROKER = {
+    'BROKER': 'dramatiq.brokers.redis.RedisBroker',
+    'REDIS_URL': 'redis://localhost:6379',  # ou a URL do seu Redis
+}
 
 
 LOGGING = {

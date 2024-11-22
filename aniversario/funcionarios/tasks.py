@@ -1,16 +1,24 @@
 #from celery import shared_task
+import dramatiq
+import logging
+from dramatiq.brokers.redis import RedisBroker
+from datetime import timedelta
 from .models import Funcionario
 from django.utils import timezone
-from .email_utils import enviar
-from django.core.mail import enviar
-import logging
-import django_rq
+from .email_utils import enviar 
 
 logger = logging.getLogger(__name__)
 
+# Configuração do broker e agendador do Dramatiq
+broker = RedisBroker("redis://localhost:6379")
+dramatiq.set_broker(broker)
+
 #@shared_task de uso apenas do celery
+@dramatiq.actor
 def enviar_email_aniversario():
     print("Tarefa executada no enviar email")
+    logger.info("Tarefa executada no enviar email")
+    
     # Filtra funcionários com aniversários no dia atual
     today = timezone.now().date()
     aniversariantes = Funcionario.objects.filter(
@@ -56,8 +64,18 @@ def enviar_email_aniversario():
             logger.error(f"Erro ao enviar e-mail para {funcionario.nome}:  {str(e)}")
             print(f"Erro ao enviar e-mail para {funcionario.nome}:  {str(e)}")          
 
+@dramatiq.actor
+def agenda_envio_email():
 
+    # Configura o próximo horário de execução
+    proxima_execucao = timezone.now().replace(hour=17, minute=0, second=0, microsecond=0)
+    if proxima_execucao < timezone.now():
+        proxima_execucao += timedelta(days=1)
 
+    #Agenda a execução recorrente (a cada 24 horas)
+    enviar_email_aniversario.send_at(proxima_execucao)
 
+    logging.info(f"Tarefa de envio de email agendada para {proxima_execucao}")
+    print(f"Tarefa de envio de eamil agendada para {proxima_execucao}")
 
-
+#dramatiq funcionarios.tasks
