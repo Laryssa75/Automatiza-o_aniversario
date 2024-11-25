@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,7 +38,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    #'django_celery_beat',
     #'django_rq',
 
     #Apps do projeto
@@ -141,7 +141,7 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'larissasooretama@gmail.com'
-EMAIL_HOST_PASSWORD = 'yjmqrvdepyfunish'
+EMAIL_HOST_PASSWORD = ''
 
 # Celery Configuration
 CELERY_BROKER_URL = 'redis://localhost:6379/0'  # URL do broker (redis)
@@ -149,6 +149,7 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'  # Backend de resultados
 CELERY_TIMEZONE = 'America/Sao_Paulo'  # Ajuste para seu fuso horário
+USE_TZ = True
 
 REDIS_URL = "redis://localhost:6379"
 
@@ -161,20 +162,36 @@ REDIS_URL = "redis://localhost:6379"
 #     }
 # }
 
-DRAMATIQ_BROKER = {
-    'BROKER': 'dramatiq.brokers.redis.RedisBroker',
-    'REDIS_URL': 'redis://localhost:6379',  # ou a URL do seu Redis
-}
+# DRAMATIQ_BROKER = {
+#     'BROKER': 'dramatiq.brokers.redis.RedisBroker',
+#     'REDIS_URL': 'redis://localhost:6379',  # ou a URL do seu Redis
+# }
 
 
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters':{
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname}: {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
+        'console': {
+            'level': 'WARNING',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
         'file': {
             'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': 'email_log.log',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': 'C:\\Users\\LARYSSA\\OneDrive - Distribuidora Sooretama\\Área de Trabalho\\Laryssa\\projetos\\email_aniversario\\aniversario\\log\\email_log.log',
+            'maxBytes': 1024 * 1024 * 5 , #armazena até 5 MB de log
             'mode': 'w',
         },
     },
@@ -182,7 +199,17 @@ LOGGING = {
         'django': {
             'handlers': ['file'],
             'level': 'DEBUG',
-            'propagate': True,
+            'propagate': False,
+        },
+        'celery': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'funcionarios': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': False,
         },
     },
 }

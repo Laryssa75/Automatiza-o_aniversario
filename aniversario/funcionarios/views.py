@@ -1,4 +1,5 @@
 import pandas as pd
+import asyncio
 from django.shortcuts import render, redirect
 from .models import Funcionario
 from django.db import models
@@ -10,9 +11,9 @@ from .tasks import enviar_email_aniversario
 from django.views.decorators.csrf import csrf_exempt
 
 
-def enviar_emails_aniversariantes_view(request):
+async def enviar_emails_aniversariantes_view(request):
 
-    enviar_email_aniversario().send()
+    await asyncio.to_thread(enviar_email_aniversario.apply_async)
     return JsonResponse({"status": "sucess", "message": "E-mails de aniversariantes enviados."})
 
 def home(request):
@@ -20,7 +21,7 @@ def home(request):
     return render(request, 'funcionarios/home.html')
 
 @csrf_exempt  #caso queira permitir chamadas sem o token CSRF (apenas se necessario)
-def importar_funcionarios(request):
+async def importar_funcionarios(request):
     #Formulario de preenchimento manual e upload de arquivo
     form_funcionario = FuncionarioForm()
     form_import = UploadExcelForm()
@@ -90,7 +91,7 @@ def importar_funcionarios(request):
 
     # ** Enfileira a tarefa após as operações de criação **
     if tarefa_enfileirada:
-        enviar_email_aniversario.send()
+        await asyncio.to_thread(enviar_email_aniversario.apply_async)
 
     return render(request, 'funcionarios/importar_excel.html', {
         'form_funcionario': form_funcionario,
