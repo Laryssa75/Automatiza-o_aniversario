@@ -8,19 +8,17 @@ from .forms import FuncionarioForm, UploadExcelForm
 from django.contrib import messages
 from django.http import JsonResponse
 from .tasks import enviar_email_aniversario
-from django.views.decorators.csrf import csrf_exempt
 
-
-async def enviar_emails_aniversariantes_view(request):
-
-    await asyncio.to_thread(enviar_email_aniversario.apply_async)
-    return JsonResponse({"status": "sucess", "message": "E-mails de aniversariantes enviados."})
+#serve para disparar envio de email manualmente
+# async def enviar_emails_aniversariantes_view(request):
+#     await asyncio.to_thread(enviar_email_aniversario.apply_async)
+#     return JsonResponse({"status": "sucess", "message": "E-mails de aniversariantes enviados."})
 
 def home(request):
     #return HttpResponse("Página inicial do app funcionários")
     return render(request, 'funcionarios/home.html')
 
-@csrf_exempt  #caso queira permitir chamadas sem o token CSRF (apenas se necessario)
+
 async def importar_funcionarios(request):
     #Formulario de preenchimento manual e upload de arquivo
     form_funcionario = FuncionarioForm()
@@ -52,18 +50,20 @@ async def importar_funcionarios(request):
                 return redirect('listar_funcionarios')
     
     #Se for envio de dados via arquivo excel
-    if 'import' in request.method == 'POST' and request.FILES.get('excel_file'):
+    if request.method == 'POST' and 'import' in request.POST and request.FILES.get('excel_file'):
         form_import = UploadExcelForm(request.POST, request.FILES)
         if form_import.is_valid():
             excel_file = request.FILES['excel_file']
             try:
                 df = pd.read_excel(excel_file)
 
-                #Obtem o maior valor existente de cbo
-                max_cbo = Funcionario.objects.aggregate(models.Max('cbo'))['cbo__max']
-                next_cbo = max_cbo +1 if max_cbo is not None else 1
 
                 for _, row in df.iterrows():
+                    #Obtem o maior valor existente de cbo
+                    max_cbo = Funcionario.objects.aggregate(models.Max('cbo'))['cbo__max']
+                    next_cbo = max_cbo +1 if max_cbo is not None else 1
+                    
+                    
                     Funcionario.objects.create(
                         nome=row['Nome'],
                         email=row['Email'],
@@ -81,7 +81,6 @@ async def importar_funcionarios(request):
 
                 #Chama a tarefa celery para envio de email de aniversario
                 #enviar_email_aniversario.apply_async()
-                # queue.enqueue(enviar_email_aniversario)
             
             except Exception as e:
                 messages.error(request, f"Erro ao importar: {e}")
@@ -91,7 +90,7 @@ async def importar_funcionarios(request):
 
     # ** Enfileira a tarefa após as operações de criação **
     if tarefa_enfileirada:
-        await asyncio.to_thread(enviar_email_aniversario.apply_async)
+        enviar_email_aniversario.apply_async()
 
     return render(request, 'funcionarios/importar_excel.html', {
         'form_funcionario': form_funcionario,

@@ -34,6 +34,9 @@ app.autodiscover_tasks()
 
 app.conf.broker_connection_retry_on_startup = True
 
+worker_cancel_long_running_tasks_on_connection_loss = True
+
+
 
 #Útil para teste e depuração de código
 @app.task(bind=True)

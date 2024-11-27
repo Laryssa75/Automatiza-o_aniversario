@@ -17,22 +17,20 @@
         <h3>Preencher Dados Manualmente</h3>
         <form method="post">
             {% csrf_token %}
-            {{ form_funcioario.as_p }}
+            {{ form_funcionario.as_p }}
             <button type="submit" name="manual" class="button">Adicionar Funcionários</button>
         </form>
 
         <hr>
 
-        <!-- Formulário de Importação de Excel -->
-         <h3>Importar Funcinários de Arquivo Excel</h3>
+       <!-- Formulário de Importação de Excel -->
+        <h3>Importar Funcionários de Arquivo Excel</h3>
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
-            {{ form_import.as_p }}
+            {{ form_import.as_p }}  <!-- Renderiza automaticamente o formulário com o campo de arquivo -->
             <button type="submit" name="import" class="button">Importar Funcionários</button>
-            <!-- <label for="excel_file">Arquivo Excel:</label>
-            <input type="file" name="excel_file" required>
-            <button type="submit">Importar</button> -->
         </form>
+
 
 
     </div>

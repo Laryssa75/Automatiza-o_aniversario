@@ -147,6 +147,7 @@ EMAIL_HOST_PASSWORD = ''
 CELERY_BROKER_URL = 'redis://localhost:6379/0'  # URL do broker (redis)
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'  # Backend de resultados
 CELERY_TIMEZONE = 'America/Sao_Paulo'  # Ajuste para seu fuso horário
 USE_TZ = True
@@ -191,7 +192,7 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': 'C:\\Users\\LARYSSA\\OneDrive - Distribuidora Sooretama\\Área de Trabalho\\Laryssa\\projetos\\email_aniversario\\aniversario\\log\\email_log.log',
-            'maxBytes': 1024 * 1024 * 5 , #armazena até 5 MB de log
+            #'maxBytes': 1024 * 1024 * 5 , #armazena até 5 MB de log
             'mode': 'w',
         },
     },

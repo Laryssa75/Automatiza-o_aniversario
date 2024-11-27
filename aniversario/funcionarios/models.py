@@ -12,6 +12,7 @@ class Funcionario(models.Model):
     cbo = models.IntegerField(unique=True, null=True, blank=True)
     funcao = models.CharField(max_length=100, null=True)
     data_admissao = models.DateField(null=True, blank=True)
+    id_tarefa_mail = models.CharField(max_length=255, null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.cbo:
