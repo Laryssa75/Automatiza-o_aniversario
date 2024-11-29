@@ -23,3 +23,9 @@ class Funcionario(models.Model):
 
     def __str__(self):
         return self.nome
+
+    #Classe responsavel pelas liberações de acesso
+    class Meta:
+        permissions = [
+            ("importar_funcionarios", "Pode importar funcionários")
+        ]

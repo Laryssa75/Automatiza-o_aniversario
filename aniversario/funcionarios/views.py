@@ -1,5 +1,6 @@
 import pandas as pd
-import asyncio
+from django.contrib.auth.decorators import permission_required
+from django.contrib.auth import authenticate, login
 from django.shortcuts import render, redirect
 from .models import Funcionario
 from django.db import models
@@ -19,8 +20,30 @@ def home(request):
     return render(request, 'funcionarios/home.html')
 
 
+def login(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            if user.is_staff: #Verifica se é admin
+                login(request, user)
+                return redirect('admin:index') #Redireciona para o painel de admin
+            else:
+                #Menssage de erro caso o usuário não seja admin
+                messages.error(request, "Usuário não encontrado ou não autorizado.")
+                return redirect('login')  #Redireciona de volta para o login de admin
+        else:
+            #Caso o login falhe
+            messages.error(request, "Usuário ou senha inválidos")
+            return render(request, 'login.html') 
+    
+    return render(request, 'login.html')
+
+@permission_required('funcionario.importar_funcionarios', raise_exception=True)
 async def importar_funcionarios(request):
-    #Formulario de preenchimento manual e upload de arquivo
+    #Formularios
     form_funcionario = FuncionarioForm()
     form_import = UploadExcelForm()
 
@@ -47,7 +70,10 @@ async def importar_funcionarios(request):
                 tarefa_enfileirada = True #Marca que a tarefa será enfileirada
 
                 messages.success(request, "Funcinario adicionado com sucesso!")
-                return redirect('listar_funcionarios')
+                
+                #Redireciona para a lista no admin após inserção manual
+                return redirect('admin:funcionarios_funcionario_changelist')
+            
     
     #Se for envio de dados via arquivo excel
     if request.method == 'POST' and 'import' in request.POST and request.FILES.get('excel_file'):
@@ -77,7 +103,9 @@ async def importar_funcionarios(request):
 
                 messages.success(request, "Funcionarios importados com sucesso!")
                 print("Funcionarios importados com sucesso!")
-                return redirect('listar_funcionarios')
+                
+                #Redireciona para a lista no admin após importação
+                return redirect('admin:funcionarios_funcionario_changelist')
 
                 #Chama a tarefa celery para envio de email de aniversario
                 #enviar_email_aniversario.apply_async()
@@ -92,11 +120,12 @@ async def importar_funcionarios(request):
     if tarefa_enfileirada:
         enviar_email_aniversario.apply_async()
 
-    return render(request, 'funcionarios/importar_excel.html', {
+    return render(request, 'funcionarios/importar_funcionario.html', {
         'form_funcionario': form_funcionario,
         'form_import': form_import,
     })
 
+
 def logout_and_redirect(request):
     logout(request)
-    return redirect('admin:login')
+    return redirect('login')

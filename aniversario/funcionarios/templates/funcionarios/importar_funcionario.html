@@ -27,7 +27,7 @@
         <h3>Importar Funcionários de Arquivo Excel</h3>
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
-            {{ form_import.as_p }}  <!-- Renderiza automaticamente o formulário com o campo de arquivo -->
+            {{ form_import.as_p }}
             <button type="submit" name="import" class="button">Importar Funcionários</button>
         </form>
 

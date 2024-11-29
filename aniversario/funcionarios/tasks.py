@@ -19,8 +19,8 @@ def enviar_email_aniversario(self):
     # Filtra funcionários com aniversários no dia atual
     today = timezone.now().date()
     aniversariantes = Funcionario.objects.filter(
-        data_nascimento_month= today.month,
-        data_nascimento_day= today.day
+        data_nascimento__month= today.month,
+        data_nascimento__day= today.day
     )
 
     logging.info(f"Buscando aniversariantes: {today}")
