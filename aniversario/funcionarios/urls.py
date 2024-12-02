@@ -4,7 +4,7 @@ from . import views
 
 urlpatterns = [
     #exemplo de rota
-    path('login/', views.login, name='login'),
+    path('login/', views.login_view, name='login'),
     path('', views.home, name='home'),
     path('importar-funcionarios/', views.importar_funcionarios, name='importar_funcionarios'),
     path('logout/', views.logout_and_redirect, name='logout_and_redirect'),

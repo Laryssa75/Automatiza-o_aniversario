@@ -1,13 +1,13 @@
 import pandas as pd
-from django.contrib.auth.decorators import permission_required
-from django.contrib.auth import authenticate, login
+from django.contrib.auth.decorators import permission_required, login_required
+from django.contrib.auth import authenticate, login as auth_login
 from django.shortcuts import render, redirect
 from .models import Funcionario
 from django.db import models
 from django.contrib.auth import logout
 from .forms import FuncionarioForm, UploadExcelForm
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import HttpResponse
 from .tasks import enviar_email_aniversario
 
 #serve para disparar envio de email manualmente
@@ -20,7 +20,7 @@ def home(request):
     return render(request, 'funcionarios/home.html')
 
 
-def login(request):
+def login_view(request):
     if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
@@ -28,19 +28,21 @@ def login(request):
 
         if user is not None:
             if user.is_staff: #Verifica se é admin
-                login(request, user)
+                login_view(request, user)
                 return redirect('admin:index') #Redireciona para o painel de admin
             else:
                 #Menssage de erro caso o usuário não seja admin
                 messages.error(request, "Usuário não encontrado ou não autorizado.")
-                return redirect('login')  #Redireciona de volta para o login de admin
+                return redirect('importar_funcionario')  #Redireciona de volta para o login de admin
         else:
             #Caso o login falhe
             messages.error(request, "Usuário ou senha inválidos")
-            return render(request, 'login.html') 
+            return render(request, 'funcionarios/login.html') 
     
-    return render(request, 'login.html')
+    return render(request, 'funcionarios/login.html') #Renderiza a página de login
 
+
+@login_required
 @permission_required('funcionario.importar_funcionarios', raise_exception=True)
 async def importar_funcionarios(request):
     #Formularios
@@ -72,7 +74,7 @@ async def importar_funcionarios(request):
                 messages.success(request, "Funcinario adicionado com sucesso!")
                 
                 #Redireciona para a lista no admin após inserção manual
-                return redirect('admin:funcionarios_funcionario_changelist')
+                return redirect('importar_funcionarios')
             
     
     #Se for envio de dados via arquivo excel
@@ -105,7 +107,8 @@ async def importar_funcionarios(request):
                 print("Funcionarios importados com sucesso!")
                 
                 #Redireciona para a lista no admin após importação
-                return redirect('admin:funcionarios_funcionario_changelist')
+                # return redirect('admin:funcionarios_funcionario_changelist')
+                return redirect('importar_funcionarios')
 
                 #Chama a tarefa celery para envio de email de aniversario
                 #enviar_email_aniversario.apply_async()
@@ -128,4 +131,5 @@ async def importar_funcionarios(request):
 
 def logout_and_redirect(request):
     logout(request)
-    return redirect('login')
+    #return render (request, 'funcionarios/login.html') #esse caminho faz o caminho para o template login.html
+    return redirect('login') #esse caminho faz o redirecionamento da url
