@@ -32,7 +32,7 @@ send_mail(
     fail_silently=False,
 )
 
-celery -A aniversario inspect scheduled
+#celery -A aniversario inspect scheduled
 
 from celery.app.control import Inspect
 from aniversario.celery import aniversario
@@ -86,3 +86,44 @@ enviar(destinatario, assunto, mensagem, foto)
 from funcionarios.tasks import enviar_email_aniversario
 
 enviar_email_aniversario.apply()
+
+
+#criando um login de usuário normal válido
+from django.contrib.auth.models import User
+user = User.objects.create_user(
+    username='maria',
+    password='senha123',
+    email='larissa@sooretama.net'
+)
+
+user.save()
+
+print("Usuário craido com sucesso!")
+
+#concedendo permissao de um função especifica para um usuário via shell
+from django.contrib.auth.models import User, Permission
+
+# Encontre o usuário
+user = User.objects.get(username='maria')
+
+# Encontre a permissão personalizada
+permission = Permission.objects.get(codename='importar_funcionarios')
+
+# Atribua a permissão
+user.user_permissions.add(permission)
+user.save()
+
+#Verificando se a permissão foi concedida
+if user.has_perm('funcionarios.importar_funcionarios'):
+    print("Usuário tem permissão")
+else:
+    print("Usuário NÃO tem permissão")
+
+
+#permissões disponiveis para verificar via shell
+from django.contrib.auth.models import Permission
+
+permissions = Permission.objects.all()
+for perm in permissions:
+    print(perm.codename)
+

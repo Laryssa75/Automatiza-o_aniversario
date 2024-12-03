@@ -1,13 +1,12 @@
 import pandas as pd
 from django.contrib.auth.decorators import permission_required, login_required
-from django.contrib.auth import authenticate, login as auth_login
+from django.contrib.auth import authenticate, login 
 from django.shortcuts import render, redirect
 from .models import Funcionario
 from django.db import models
 from django.contrib.auth import logout
 from .forms import FuncionarioForm, UploadExcelForm
 from django.contrib import messages
-from django.http import HttpResponse
 from .tasks import enviar_email_aniversario
 
 #serve para disparar envio de email manualmente
@@ -22,19 +21,17 @@ def home(request):
 
 def login_view(request):
     if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
+        username = request.POST.get('username')
+        password = request.POST.get('password')
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
+            login(request, user)
             if user.is_staff: #Verifica se é admin
-                login_view(request, user)
                 return redirect('admin:index') #Redireciona para o painel de admin
             else:
-                #Menssage de erro caso o usuário não seja admin
-                messages.error(request, "Usuário não encontrado ou não autorizado.")
-                return redirect('importar_funcionario')  #Redireciona de volta para o login de admin
-        else:
+                return redirect('importar_funcionarios')  
+        else:        
             #Caso o login falhe
             messages.error(request, "Usuário ou senha inválidos")
             return render(request, 'funcionarios/login.html') 
@@ -43,7 +40,7 @@ def login_view(request):
 
 
 @login_required
-@permission_required('funcionario.importar_funcionarios', raise_exception=True)
+@permission_required('funcionarios.importar_funcionarios', raise_exception=True)
 async def importar_funcionarios(request):
     #Formularios
     form_funcionario = FuncionarioForm()
@@ -65,6 +62,8 @@ async def importar_funcionarios(request):
                 funcionario.cbo = next_cbo #Atribui o próximo valor de cbo
                 form_funcionario.save() #Salva o funcionario
 
+                messages.success(request, "Funcionário adicionado com sucesso!")
+
                 #Alteração para que o envio do email seja imediato quando se insere os dados dos funcionários via web
                 #enviar_email_aniversario.apply_async()
                 #queue.enqueue(enviar_email_aniversario)
@@ -75,6 +74,9 @@ async def importar_funcionarios(request):
                 
                 #Redireciona para a lista no admin após inserção manual
                 return redirect('importar_funcionarios')
+            
+            else:
+                messages.error(request, "Erro ao adicionar funcionário.")
             
     
     #Se for envio de dados via arquivo excel
@@ -106,8 +108,6 @@ async def importar_funcionarios(request):
                 messages.success(request, "Funcionarios importados com sucesso!")
                 print("Funcionarios importados com sucesso!")
                 
-                #Redireciona para a lista no admin após importação
-                # return redirect('admin:funcionarios_funcionario_changelist')
                 return redirect('importar_funcionarios')
 
                 #Chama a tarefa celery para envio de email de aniversario
