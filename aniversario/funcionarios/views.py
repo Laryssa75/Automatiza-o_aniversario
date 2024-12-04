@@ -1,4 +1,5 @@
 import pandas as pd
+import logging
 from django.contrib.auth.decorators import permission_required, login_required
 from django.contrib.auth import authenticate, login 
 from django.shortcuts import render, redirect
@@ -8,11 +9,15 @@ from django.contrib.auth import logout
 from .forms import FuncionarioForm, UploadExcelForm
 from django.contrib import messages
 from .tasks import enviar_email_aniversario
+from asgiref.sync import sync_to_async
+
 
 #serve para disparar envio de email manualmente
 # async def enviar_emails_aniversariantes_view(request):
 #     await asyncio.to_thread(enviar_email_aniversario.apply_async)
 #     return JsonResponse({"status": "sucess", "message": "E-mails de aniversariantes enviados."})
+
+logger = logging.getLogger(__name__)
 
 def home(request):
     #return HttpResponse("Página inicial do app funcionários")
@@ -38,10 +43,15 @@ def login_view(request):
     
     return render(request, 'funcionarios/login.html') #Renderiza a página de login
 
+#Calculo do cbo
+def obter_proximo_cbo():    
+   #Obtem o maior valor existente de cbo
+    max_cbo = Funcionario.objects.aggregate(models.Max('cbo'))['cbo__max']
+    return max_cbo + 1 if max_cbo is not None else 1 
 
-@login_required
+
 @permission_required('funcionarios.importar_funcionarios', raise_exception=True)
-async def importar_funcionarios(request):
+def importar_funcionarios(request):
     #Formularios
     form_funcionario = FuncionarioForm()
     form_import = UploadExcelForm()
@@ -53,32 +63,21 @@ async def importar_funcionarios(request):
         if 'manual' in request.POST:  
             form_funcionario = FuncionarioForm(request.POST)
             if form_funcionario.is_valid():
-
-                #Obtem o maior valor existente de cbo
-                max_cbo = Funcionario.objects.aggregate(models.Max('cbo'))['cbo__max']
-                next_cbo = max_cbo + 1 if max_cbo is not None else 1
-
                 funcionario = form_funcionario.save(commit=False)
-                funcionario.cbo = next_cbo #Atribui o próximo valor de cbo
+                funcionario.cbo = obter_proximo_cbo() #Atribui o próximo valor de cbo
                 form_funcionario.save() #Salva o funcionario
-
-                messages.success(request, "Funcionário adicionado com sucesso!")
 
                 #Alteração para que o envio do email seja imediato quando se insere os dados dos funcionários via web
                 #enviar_email_aniversario.apply_async()
-                #queue.enqueue(enviar_email_aniversario)
 
                 tarefa_enfileirada = True #Marca que a tarefa será enfileirada
 
                 messages.success(request, "Funcinario adicionado com sucesso!")
-                
-                #Redireciona para a lista no admin após inserção manual
-                return redirect('importar_funcionarios')
-            
+                logger.info
             else:
                 messages.error(request, "Erro ao adicionar funcionário.")
-            
-    
+
+
     #Se for envio de dados via arquivo excel
     if request.method == 'POST' and 'import' in request.POST and request.FILES.get('excel_file'):
         form_import = UploadExcelForm(request.POST, request.FILES)
@@ -87,20 +86,14 @@ async def importar_funcionarios(request):
             try:
                 df = pd.read_excel(excel_file)
 
-
                 for _, row in df.iterrows():
-                    #Obtem o maior valor existente de cbo
-                    max_cbo = Funcionario.objects.aggregate(models.Max('cbo'))['cbo__max']
-                    next_cbo = max_cbo +1 if max_cbo is not None else 1
-                    
-                    
                     Funcionario.objects.create(
                         nome=row['Nome'],
                         email=row['Email'],
                         data_nascimento=row['Data Nascimento'],
                         data_admissao=row['Data Admissão'],
                         funcao=row['Função'],
-                        cbo=next_cbo #atribui o próximo valor de id sequencial
+                        cbo=obter_proximo_cbo() #atribui o próximo valor de id sequencial
                     )
 
                 tarefa_enfileirada = True #Marca que a tarefa será enfileirada
@@ -108,14 +101,14 @@ async def importar_funcionarios(request):
                 messages.success(request, "Funcionarios importados com sucesso!")
                 print("Funcionarios importados com sucesso!")
                 
-                return redirect('importar_funcionarios')
+                #return redirect('importar_funcionarios')
 
                 #Chama a tarefa celery para envio de email de aniversario
                 #enviar_email_aniversario.apply_async()
             
             except Exception as e:
-                messages.error(request, f"Erro ao importar: {e}")
-                print("Erro ao importar!")
+                messages.error(request, f"Erro ao importar os dados os funcionários: {e}")
+                print("Erro ao importar o arquivo excel!")
 
 
 
@@ -127,6 +120,11 @@ async def importar_funcionarios(request):
         'form_funcionario': form_funcionario,
         'form_import': form_import,
     })
+
+def menu_cadastros(request):
+    #Buscar todos os funcionáris cadastrados
+    funcionarios = Funcionario.objects.all()
+    return render(request, 'funcionarios/cadastros.html', {'funcionarios' : funcionarios})
 
 
 def logout_and_redirect(request):
