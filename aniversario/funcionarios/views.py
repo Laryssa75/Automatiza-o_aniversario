@@ -2,14 +2,14 @@ import pandas as pd
 import logging
 from django.contrib.auth.decorators import permission_required, login_required
 from django.contrib.auth import authenticate, login 
-from django.shortcuts import render, redirect
-from .models import Funcionario
-from django.db import models
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import logout
-from .forms import FuncionarioForm, UploadExcelForm
+from django.db import models
 from django.contrib import messages
+from .models import Funcionario
+from .forms import FuncionarioForm, UploadExcelForm
 from .tasks import enviar_email_aniversario
-from asgiref.sync import sync_to_async
+
 
 
 #serve para disparar envio de email manualmente
@@ -51,29 +51,44 @@ def obter_proximo_cbo():
 
 
 @permission_required('funcionarios.importar_funcionarios', raise_exception=True)
-def importar_funcionarios(request):
+def importar_funcionarios(request, cbo=None):
+
     #Formularios
-    form_funcionario = FuncionarioForm()
-    form_import = UploadExcelForm()
+    form_funcionario = FuncionarioForm(request.POST or None)
+    form_import = UploadExcelForm(request.POST or None, request.FILES or None)
 
     tarefa_enfileirada = False #Variável para rastrear se a tarefa será enfileirada
 
+
+    #Criação ou Edição de Funcionários     
+    if cbo:
+        funcionario = get_object_or_404(Funcionario, pk=cbo)
+        form_funcionario = FuncionarioForm(request.POST or None, instance=funcionario)
+
+    if form_funcionario.is_valid():
+        funcionario = form_funcionario.save(commit=False)
+        if not cbo: #se não for edição, atribui o próximo CBO
+            funcionario.cbo = obter_proximo_cbo() #Atribui o próximo valor de cbo
+            form_funcionario.save() #Salva o funcionario
+
+            #Alteração para que o envio do email seja imediato quando se insere os dados dos funcionários via web
+            #enviar_email_aniversario.apply_async()
+
+            tarefa_enfileirada = True #Marca que a tarefa será enfileirada
+
+            return redirect('importar_funcionario')
+
+
     if request.method == 'POST':
-        #Envio de dados manual
-        if 'manual' in request.POST:  
-            form_funcionario = FuncionarioForm(request.POST)
+        # Envio de dados manual
+        if 'manual' in request.POST:
             if form_funcionario.is_valid():
                 funcionario = form_funcionario.save(commit=False)
-                funcionario.cbo = obter_proximo_cbo() #Atribui o próximo valor de cbo
-                form_funcionario.save() #Salva o funcionario
-
-                #Alteração para que o envio do email seja imediato quando se insere os dados dos funcionários via web
-                #enviar_email_aniversario.apply_async()
-
-                tarefa_enfileirada = True #Marca que a tarefa será enfileirada
-
-                messages.success(request, "Funcinario adicionado com sucesso!")
-                logger.info
+                if not cbo:
+                    funcionario.cbo = obter_proximo_cbo()  # Atribui o próximo valor de cbo
+                form_funcionario.save()  # Salva o funcionário
+                messages.success(request, "Funcionário adicionado com sucesso!")
+                tarefa_enfileirada = True
             else:
                 messages.error(request, "Erro ao adicionar funcionário.")
 
@@ -121,10 +136,31 @@ def importar_funcionarios(request):
         'form_import': form_import,
     })
 
+
 def menu_cadastros(request):
     #Buscar todos os funcionáris cadastrados
     funcionarios = Funcionario.objects.all()
     return render(request, 'funcionarios/cadastros.html', {'funcionarios' : funcionarios})
+
+
+def editar_funcionario(request, cbo):
+    funcionario = get_object_or_404(Funcionario, pk=cbo)
+
+
+    if request.method == 'POST':
+        form = FuncionarioForm(request.POST, instance=funcionario)
+        if form.is_valid():
+            form.save() #salva as alterações feitas no dados do funcionário
+            return redirect('funcionarios')
+        else:
+            form = FuncionarioForm(instance=funcionario) #preenche o formulário com os dados do funcionário
+
+        return render(request, 'importar_funcionario.html', {'form': form})
+
+def excluir_funcionario(request, pk):
+    funcionario = get_object_or_404(Funcionario, pk=pk)
+    funcionario.delete()
+    return redirect('menu_cadastros')
 
 
 def logout_and_redirect(request):

@@ -70,3 +70,12 @@ p {
     margin-top: 20px;
 }
 
+/*Adicionando mais estilo para a sidebar*/
+
+.bg-dark {
+    background-color: #c56205 !important; /*cor de fundo para o menu*/
+}
+
+.nav-link:hover {
+    background-color: #ffffff;
+}
