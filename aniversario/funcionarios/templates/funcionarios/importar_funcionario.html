@@ -1,21 +1,19 @@
 {% extends 'base.html' %} <!-- Deve ser a primeira tag do template -->
 
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-BR">
-{% block title %}Página de Cadastro{% endblock %}
-
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Importar Funcionários</title>
+    <title>{% block title %}Cadastro de Funcionários{% endblock %}</title>
 
-    {% load static %}
     <!-- <link rel="stylesheet" href="{% static 'funcionarios/styles.css' %}"> -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="btn-lg">
-
+    {% block content %}
 
 <!--Container invisível para armazenar mensagens-->
 <div id="messagesContainer" data-messages="{% for message in messages %}{{ message|escapejs }}{% if not forloop.last %}|||{% endif %}{% endfor %}"></div>
@@ -38,10 +36,10 @@
     </div>  
 </div>
 
-<div class="container d-flex justify-content-center align-items-center min-vh-100">
+<div class="container d-flex justify-content-center align-items-center min-vh-70">
     <div class="row w-100">
         <div class="col-lg-6 col-md-8 col-sm-12 mx-auto">
-            <h2 class="text-center mb-4">Importar Funcionarios</h2>
+            <h2 class="text-center mb-4">Cadastro de Funcionarios</h2>
 
             <!-- Formulario de Preenchimento Manual -->
             <p class="text-start fw-normal mb-3">Preencher Dados Manualmente</p>
@@ -56,7 +54,7 @@
                 <!-- Renderiza os campos do formulário -->
                 {{ form.as_p }} <!-- Correção aqui: {{ form.as_p }} -->
 
-                <button type="submit" class="btn btn-primary w-100">
+                <button type="submit" class="btn btn-primary w-100" style="background-color:#c56205 !important; border: #b85c07;">
                     {% if object %} <!--verifica se é edição-->
                         Salvar Alterações
                     {% else %}
@@ -79,7 +77,7 @@
                         <div id="fileError" class="form-text text-danger mt-2" style="display:none;">Nenhum arquivo selecionado</div>
                     </div>
                 </div>
-                <button type="submit" name="import" class="btn btn-primary w-100">Importar Funcionários</button>
+                <button type="submit" name="import" class="btn btn-primary w-100" style="background-color:#c56205 !important; border: #b85c07;">Importar Funcionários</button>
             </form>
         </div>
     </div>

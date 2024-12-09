@@ -1,27 +1,30 @@
+{% extends 'base.html' %}
+
+{% load static %}
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menu de Cadastro de Funcionários</title>
+    <title>{% block title %}Menu de Cadastro de Funcionários{% endblock %}</title>
 
-    {% load static %}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="btn-lg">
 
+    {% block content %}
     <div class="container text-center align-items-center min-vh-100">
         <div class="col-lg-6 col-md-8 col-sm-12 mx-auto">
             <div class="row w-100">
                 <h2 class="text-center mb-4">Menu de Cadastro de Funcionários</h2>
-                <h4 class="text-center mb-3">Selecione uma opção de ação com os cadastros</h4>
+                <h4 class="text-center fw-light mb-3">Selecione uma opção de ação com os cadastros</h4>
                 <div class="input-group mb-3">
                     <select id="action-Select" class="form-select">
                         <option value="incluir">Incluir</option> <!--precisa direcionar ele para a tela importar funcionarios-->
                         <option value="editar">Editar</option> <!--direcionar para visualizar os dados na tela de importar funcionarios-->
                         <option value="excluir">Excluir</option>
                     </select>
-                    <button type="button" id="applyAction" class="btn btn-primary">Aplicar Ação</button>
+                    <button type="button" id="applyAction" class="btn btn-primary" style="background-color:#c56205 !important; border: #b85c07;">Aplicar Ação</button>
                 </div>
             </div>
         </div>
@@ -34,7 +37,7 @@
     <div class="container mt-5">
         <h2 class="text-center"> Cadastros</h2>
         <div class="table-responsive mt-4">
-            <form id="actionForm" method="POST" action="{% url 'aplicar_acao' %}"></form>
+            <form id="actionForm" method="POST" action="{% url 'menu_cadastros' %}"></form>
                 {% csrf_token %}
                 <table class="table table-bordered">
                     <thead> <!--cabeçalho da tabela-->
@@ -71,7 +74,7 @@
                 </table>
         </div>
     </div>
-    
+    {% endblock %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>    
     <script>
