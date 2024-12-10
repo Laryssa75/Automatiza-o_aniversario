@@ -76,7 +76,7 @@ def importar_funcionarios(request, cbo=None):
 
             tarefa_enfileirada = True #Marca que a tarefa será enfileirada
 
-            return redirect('importar_funcionario')
+            return redirect('cadastros')
 
 
     if request.method == 'POST':
@@ -93,37 +93,37 @@ def importar_funcionarios(request, cbo=None):
                 messages.error(request, "Erro ao adicionar funcionário.")
 
 
-    #Se for envio de dados via arquivo excel
-    if request.method == 'POST' and 'import' in request.POST and request.FILES.get('excel_file'):
-        form_import = UploadExcelForm(request.POST, request.FILES)
-        if form_import.is_valid():
-            excel_file = request.FILES['excel_file']
-            try:
-                df = pd.read_excel(excel_file)
+        #Se for envio de dados via arquivo excel
+        elif 'import' in request.POST and request.FILES.get('excel_file'):
+            form_import = UploadExcelForm(request.POST, request.FILES)
+            if form_import.is_valid():
+                excel_file = request.FILES['excel_file']
+                try:
+                    df = pd.read_excel(excel_file)
 
-                for _, row in df.iterrows():
-                    Funcionario.objects.create(
-                        nome=row['Nome'],
-                        email=row['Email'],
-                        data_nascimento=row['Data Nascimento'],
-                        data_admissao=row['Data Admissão'],
-                        funcao=row['Função'],
-                        cbo=obter_proximo_cbo() #atribui o próximo valor de id sequencial
-                    )
+                    for _, row in df.iterrows():
+                        Funcionario.objects.create(
+                            nome=row['Nome'],
+                            email=row['Email'],
+                            data_nascimento=row['Data Nascimento'],
+                            data_admissao=row['Data Admissão'],
+                            funcao=row['Função'],
+                            cbo=obter_proximo_cbo() #atribui o próximo valor de id sequencial
+                        )
 
-                tarefa_enfileirada = True #Marca que a tarefa será enfileirada
+                    tarefa_enfileirada = True #Marca que a tarefa será enfileirada
 
-                messages.success(request, "Funcionarios importados com sucesso!")
-                print("Funcionarios importados com sucesso!")
+                    messages.success(request, "Funcionarios importados com sucesso!")
+                    print("Funcionarios importados com sucesso!")
+                    
+                    #return redirect('importar_funcionarios')
+
+                    #Chama a tarefa celery para envio de email de aniversario
+                    #enviar_email_aniversario.apply_async()
                 
-                #return redirect('importar_funcionarios')
-
-                #Chama a tarefa celery para envio de email de aniversario
-                #enviar_email_aniversario.apply_async()
-            
-            except Exception as e:
-                messages.error(request, f"Erro ao importar os dados os funcionários: {e}")
-                print("Erro ao importar o arquivo excel!")
+                except Exception as e:
+                    messages.error(request, f"Erro ao importar os dados os funcionários: {e}")
+                    print("Erro ao importar o arquivo excel!")
 
 
 
@@ -140,6 +140,8 @@ def importar_funcionarios(request, cbo=None):
 def menu_cadastros(request):
     #Buscar todos os funcionáris cadastrados
     funcionarios = Funcionario.objects.all()
+    print(funcionarios)
+    logging.info(funcionarios)
     return render(request, 'funcionarios/cadastros.html', {'funcionarios' : funcionarios})
 
 
