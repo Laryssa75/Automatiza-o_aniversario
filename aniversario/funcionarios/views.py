@@ -102,20 +102,25 @@ def importar_funcionarios(request, cbo=None):
                     df = pd.read_excel(excel_file)
 
                     for _, row in df.iterrows():
-                        Funcionario.objects.create(
-                            nome=row['Nome'],
-                            email=row['Email'],
-                            data_nascimento=row['Data Nascimento'],
-                            data_admissao=row['Data Admissão'],
-                            funcao=row['Função'],
-                            cbo=obter_proximo_cbo() #atribui o próximo valor de id sequencial
-                        )
+                        if 'NOME' in row and 'EMAIL' in row and 'DATA NASCIMENTO' in row:
+                            Funcionario.objects.create(
+                                nome=row['Nome'],
+                                email=row['Email'],
+                                data_nascimento=row['Data Nascimento'],
+                                data_admissao=row['Data Admissão', None],
+                                funcao=row['Função', None],
+                                cbo=obter_proximo_cbo() #atribui o próximo valor de id sequencial
+                            )
 
-                    tarefa_enfileirada = True #Marca que a tarefa será enfileirada
+                            tarefa_enfileirada = True #Marca que a tarefa será enfileirada
 
+                        else:
+                            messages.error(request, "Arquivo inválido: algumas colunas estão faltando.")
+                            break
                     messages.success(request, "Funcionarios importados com sucesso!")
                     print("Funcionarios importados com sucesso!")
-                    
+
+
                     #return redirect('importar_funcionarios')
 
                     #Chama a tarefa celery para envio de email de aniversario
@@ -145,23 +150,33 @@ def menu_cadastros(request):
     return render(request, 'funcionarios/cadastros.html', {'funcionarios' : funcionarios})
 
 
-def editar_funcionario(request, cbo):
-    funcionario = get_object_or_404(Funcionario, pk=cbo)
-
+def editar_funcionarios(request, cbo):
+    funcionario = get_object_or_404(Funcionario, cbo=cbo)
+    print(f"funcao dentro da view editar funcionario: {funcionario}, {funcionario.nome}, {funcionario.cbo}")
 
     if request.method == 'POST':
-        form = FuncionarioForm(request.POST, instance=funcionario)
-        if form.is_valid():
-            form.save() #salva as alterações feitas no dados do funcionário
-            return redirect('funcionarios')
+        print(f"Dados recebidos no POST: {request.POST}")
+
+        form_funcionario = FuncionarioForm(request.POST, instance=funcionario)
+        #print(f"depois do post editar funcionario: {form_funcionario}")
+        
+        
+        if form_funcionario.is_valid():
+            form_funcionario.save() #salva as alterações feitas no dados do funcionário
+            messages.success(request,'Funcionário alterado com sucesso.')
+            return redirect('menu_cadastros')
         else:
-            form = FuncionarioForm(instance=funcionario) #preenche o formulário com os dados do funcionário
+            form_funcionario = FuncionarioForm(instance=funcionario) #preenche o formulário com os dados do funcionário
+            messages.error(request, "Falha ao editar o cadastro do funcionário.")
 
-        return render(request, 'importar_funcionario.html', {'form': form})
+        return render(request, 'funcionarios/importar_funcionario.html', {'form': form_funcionario, 'funcionario': funcionario})
 
-def excluir_funcionario(request, pk):
-    funcionario = get_object_or_404(Funcionario, pk=pk)
-    funcionario.delete()
+
+def excluir_funcionario(request, cbo):
+    if request.method == "POST":
+        funcionario = get_object_or_404(Funcionario, cbo=cbo)
+        funcionario.delete()
+        messages.success(request, "Funcionário excluído com sucesso.")
     return redirect('menu_cadastros')
 
 

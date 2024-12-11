@@ -8,27 +8,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Menu de Cadastro de Funcionários{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet"> -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.0/font/bootstrap-icons.min.css" rel="stylesheet">
 </head>
-<body class="btn-lg">
+<body>
 
     {% block content %}
     
     <div class="container text-center align-items-center min-vh-100">
         <div class="col-lg-6 col-md-8 col-sm-12 mx-auto">
-            <div class="row w-100">
-                <h2 class="text-center mb-4">Menu de Cadastro de Funcionários</h2>
-                <h5 class="text-center fw-light mb-3">Selecione uma opção de ação com os cadastros</h5>
-                <div class="input-group mb-3">
-                    <select id="actionSelect" class="form-select">
-                        <option value="incluir">Incluir</option>
-                        <option value="editar">Editar</option>
-                        <option value="excluir">Excluir</option>
-                    </select>
-                    <button type="button" id="applyAction" class="btn btn-primary" style="background-color:#c56205 !important; border: #b85c07;">Aplicar Ação</button>
+            <div class="container mt-4">
+                <div class="row w-100">
+                    <h2 class="text-center mb-4">Menu de Cadastro de Funcionários</h2>
+                    <a 
+                    href="{% url 'importar_funcionarios' %}" 
+                    class="btn btn-primary text-center" 
+                    id="botao_novo_cadastro"
+                    style="background-color:#c56205 !important; border: #b85c07;">Cadastrar novo funcionário</a>
                 </div>
             </div>
         </div>
-
+            
         <div class="my-4 border-top mt-4"></div>
         
         <div class="container mt-4">
@@ -39,25 +39,43 @@
                     <table class="table table-bordered">
                         <thead>
                             <tr>
-                                <th><input type="checkbox" id="selectAll" title="Selecionar todos"></th>
                                 <th>CBO</th>
                                 <th>Nome</th>
                                 <th>E-mail</th>
                                 <th>Data de Nascimento</th>
                                 <th>Função</th>
                                 <th>Data de Admissão</th>
+                                <th>Ações</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for funcionario in funcionarios %}
                             <tr>
-                                <td><input type="checkbox" name="Selected[]" value="{{ funcionario.cbo }}" class="selectRow"></td>
                                 <td>{{ funcionario.cbo|default:"Não informado" }}</td>
                                 <td>{{ funcionario.nome|default:"Não informado" }}</td>
                                 <td>{{ funcionario.email|default:"Não informado" }}</td>
                                 <td>{{ funcionario.data_nascimento|default:"Não informado" }}</td>
                                 <td>{{ funcionario.funcao|default:"Não informado" }}</td>
                                 <td>{{ funcionario.data_admissao|default:"Não informado" }}</td>
+                                <td>
+                                    <!--Botão para excluir funcionário-->
+                                    <form method="POST" action="{% url 'excluir_funcionario' funcionario.cbo %}" class="d-inline">
+
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger btn-sm" title="Excluir">
+                                            <i class="bi bi-trash" style="font-size: 35px;"></i>
+                                        </button>     
+                                    </form>
+
+
+                                    <form method="POST" action="{% url 'editar_funcionarios' funcionario.cbo %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <!-- {{ form_import.as_p }} -->
+                                        <button type="submit" class="btn btn-primary btn-sm" title="Editar">
+                                            <i class="bi bi-pencil" style="font-size: 35px;"></i>
+                                        </button>
+                                    </form>
+                                </td>
                             </tr>
                             {% empty %}
                             <tr>
@@ -69,56 +87,11 @@
                 </form>
             </div>
         </div>
+        
     </div>
     {% endblock %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Selecionar todos os checkboxes
-        document.getElementById('selectAll').addEventListener('change', function(e) {
-            const checkboxes = document.querySelectorAll('.selectRow');
-            checkboxes.forEach((checkbox) => {checkbox.checked = e.target.checked;
-            });
-        });
-
-        //Coleta os IDs selecionados e realiza a ação
-        document.getElementById('applyAction').addEventListener('click', function() {
-            const selectedIds = [];
-            const checkboxes = document.querySelectorAll('.selectRow:checked');
-            checkboxes.forEach((checkbox) => {
-                selectedIds.push(checkbox.value);
-            });
-            console.log("IDs selecionados:",selectedIds);
-
-            const form = document.getElementById('actionForm');
-            const action = document.getElementById('actionSelect').value;
-
-            if (selectedIds.length > 0) {
-                alert('IDs selecionados:' +selectedIds.join(','));
-                if (action === "incluir") {
-                window.location.href = "{% url 'importar_funcionarios' %}";
-                } else if (action === "editar") {
-                    const selected = document.querySelectorAll('.selectRow:checked');
-                    if (selected.length > 0) {
-                        form.action = "{% url 'editar_funcionario' %}";  <!-- Mude para a URL correta -->
-                        form.submit();
-                    } else {
-                        alert("Selecione pelo menos um funcionário para aplicar a ação.");
-                    }
-                } else if (action == "excluir") {
-                    const selected = document.querySelector('.selectRow:checked');
-                    if (selected.length > 0) {
-                        form.action =  "{% url 'excluir_funcionario' %}";
-                        form.submit();
-                    }
-                }else {
-                    alert("Selecione pelo menos um funcionário para a ação.");
-                }
-            }else {
-                alert('Nenhum item selecionado.')
-            }
-        });
-
-    </script>
+    
 </body>
 </html>

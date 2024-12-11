@@ -44,7 +44,7 @@
             <!-- Formulario de Preenchimento Manual -->
             <form method="POST" action="{% url 'importar_funcionarios' %}">
                 {% csrf_token %}
-                {% if object %} <!--verifica se é um objeto existente de edicao-->
+                {% if form_funcionario.instance.cbo %} <!--verifica se é um objeto existente de edicao-->
                 <h3 class="text-center mb-4">Editar Funcionario</h3>
                 {% else %}
                 <h3 class="text-center mb-4">Novo Funcionario</h3>
@@ -156,7 +156,7 @@
                 <!-- {{ form_funcionario.as_p }} -->
                 
                 <button type="submit" class="btn btn-primary w-100" style="background-color:#c56205 !important; border: #b85c07;">
-                    {% if object %} <!--verifica se é edição-->
+                    {% if form_funcionario.instance.cbo %} <!--verifica se é edição-->
                     Salvar Alterações
                     {% else %}
                     Adicionar Funcionário
