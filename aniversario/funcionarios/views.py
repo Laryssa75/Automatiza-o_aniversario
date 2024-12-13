@@ -9,6 +9,7 @@ from django.contrib import messages
 from .models import Funcionario
 from .forms import FuncionarioForm, UploadExcelForm
 from .tasks import enviar_email_aniversario
+from datetime import datetime
 
 
 
@@ -107,8 +108,8 @@ def importar_funcionarios(request, cbo=None):
                                 nome=row['Nome'],
                                 email=row['Email'],
                                 data_nascimento=row['Data Nascimento'],
-                                data_admissao=row['Data Admissão', None],
-                                funcao=row['Função', None],
+                                data_admissao=row.get['Data Admissão', None],
+                                funcao=row.get['Função', None],
                                 cbo=obter_proximo_cbo() #atribui o próximo valor de id sequencial
                             )
 
@@ -152,24 +153,54 @@ def menu_cadastros(request):
 
 def editar_funcionarios(request, cbo):
     funcionario = get_object_or_404(Funcionario, cbo=cbo)
-    print(f"funcao dentro da view editar funcionario: {funcionario}, {funcionario.nome}, {funcionario.cbo}")
+    
+    print(f"data de nascimento: {funcionario.data_nascimento} e data de admissao: {funcionario.data_admissao}")
+    # Cria uma cópia de request.POST para não modificar o original
+    post_data = request.POST.copy()
 
+    # Verificação e conversão das datas, caso existam no post_data
+    if 'data_nascimento' in post_data:
+        try:
+            
+            # Converte a data de nascimento de string para datetime
+            data_nascimento = datetime.strptime(post_data['data_nascimento'], '%d/%m/%Y')
+             # Converte de volta para string no formato adequado para o Django
+            post_data['data_nascimento'] = data_nascimento.date()  # Usa data para garantir que seja um campo date
+        except ValueError:
+            messages.error(request, "Data de nascimento inválida.")
+            return render(request, 'funcionarios/importar_funcionario.html', {'form_funcionario': form_editar})
+
+    if 'data_admissao' in post_data:
+        try:
+            # Converte a data de admissão de string para datetime
+            data_admissao = datetime.strptime(post_data['data_admissao'], '%d/%m/%Y')
+            # Converte de volta para string no formato adequado para o Django
+            post_data['data_admissao'] = data_admissao.date()  # Usa data para garantir que seja um campo date
+        except ValueError:
+            messages.error(request, "Data de admissão inválida.")
+            return render(request, 'funcionarios/importar_funcionario.html', {'form_funcionario': form_editar})
+    
+     # Exibe os dados após a conversão para verificação
+    print(f"Nova data de nascimento: {post_data.get('data_nascimento')} e nova data de admissao: {post_data.get('data_admissao')}")
+    
+    # Inicializa o formulário com os dados corrigidos de post_data e os dados do funcionário
+    form_editar = FuncionarioForm(post_data, instance=funcionario)  # Passando post_data diretamente para o formulário
+    
     if request.method == 'POST':
-        print(f"Dados recebidos no POST: {request.POST}")
+            
+        if form_editar.is_valid():
+            funcionario.save()
+            print(f"data de nascimento: {funcionario.data_nascimento} e data de admissao: {funcionario.data_admissao}")
 
-        form_funcionario = FuncionarioForm(request.POST, instance=funcionario)
-        #print(f"depois do post editar funcionario: {form_funcionario}")
-        
-        
-        if form_funcionario.is_valid():
-            form_funcionario.save() #salva as alterações feitas no dados do funcionário
             messages.success(request,'Funcionário alterado com sucesso.')
             return redirect('menu_cadastros')
+            
         else:
-            form_funcionario = FuncionarioForm(instance=funcionario) #preenche o formulário com os dados do funcionário
+            form_editar = FuncionarioForm(instance=funcionario) #preenche o formulário com os dados do funcionário
             messages.error(request, "Falha ao editar o cadastro do funcionário.")
 
-        return render(request, 'funcionarios/importar_funcionario.html', {'form': form_funcionario, 'funcionario': funcionario})
+    return render(request, 'funcionarios/importar_funcionario.html', {
+        'form_funcionario': form_editar,})
 
 
 def excluir_funcionario(request, cbo):

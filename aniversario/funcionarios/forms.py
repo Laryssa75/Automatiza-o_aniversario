@@ -19,5 +19,16 @@ class FuncionarioForm(forms.ModelForm):
         }
     )
 
+    #Definindo um widget para data com formato customizado
+    data_nascimento = forms.DateField(
+        widget=forms.DateInput(attrs={'type':'date', 'class': 'form-control'}, format='%d/%m/%Y'),
+        input_formats=['%Y/%m/%d']
+    )
+    data_admissao = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}, format='%d/%m/%Y'),
+        input_formats=['%Y/%m/%d']
+    )
+
+
 class UploadExcelForm(forms.Form):
     excel_file = forms.FileField(label="Selecione o arquivo Excel")

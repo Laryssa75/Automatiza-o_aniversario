@@ -44,10 +44,11 @@
             <!-- Formulario de Preenchimento Manual -->
             <form method="POST" action="{% url 'importar_funcionarios' %}">
                 {% csrf_token %}
-                {% if form_funcionario.instance.cbo %} <!--verifica se é um objeto existente de edicao-->
-                <h3 class="text-center mb-4">Editar Funcionario</h3>
+                
+                {% if form_funcionario.instance.cbo %}
+                    <h3 class="text-center mb-4">Editar Funcionario</h3>
                 {% else %}
-                <h3 class="text-center mb-4">Novo Funcionario</h3>
+                    <h3 class="text-center mb-4">Novo Funcionario</h3>
                 {% endif %}
                 
                 <p class="text-start fw-normal mb-3">Preencher os dados manualmente</p>
@@ -93,11 +94,11 @@
                 <div class="mb-3">
                     <label for="form_funcionario.data_nascimento.if_for_data" class="form-label">Data de Nascimento*</label>
                     <input 
-                        type="date" 
-                        name="data" 
+                        type="text" 
+                        name="data_nascimento" 
                         id="id_data_nascimento" 
                         class="form-control" 
-                        value="{{ form_funcionario.data_nascimento.value }}" 
+                        value="{{ form_funcionario.data_nascimento.value|date:'d/m/Y' }}" 
                         placeholder="Selecione uma data"
                         required>
                     {% if form_funcionario.data_nascimento.errors %}
@@ -111,11 +112,11 @@
                 <div class="mb-3">
                     <label for="{{ form_funcionario.data_admissao.if_for_label }}" class="form-label">Data de Admissão</label>
                     <input 
-                        type="date" 
+                        type="text" 
                         name="data_admissao" 
                         id="id_data_admissao" 
                         class="form-control" 
-                        value="{{ form_funcionario.data_admissao.value }}"
+                        value="{{ form_funcionario.data_admissao.value|date:'d/m/Y' }}"
                         placeholder="Selecione uma data">
                     {% if form_funcionario.data_admissao.errors %}
                     <div class="text-danger small">
@@ -152,14 +153,11 @@
                     {% endif %}
                 </div>
                 
-                <!-- Renderiza os campos do formulário sem estilização -->
-                <!-- {{ form_funcionario.as_p }} -->
-                
                 <button type="submit" class="btn btn-primary w-100" style="background-color:#c56205 !important; border: #b85c07;">
                     {% if form_funcionario.instance.cbo %} <!--verifica se é edição-->
-                    Salvar Alterações
+                        Salvar Alterações
                     {% else %}
-                    Adicionar Funcionário
+                        Adicionar Funcionário
                     {% endif %}
                 </button>
 

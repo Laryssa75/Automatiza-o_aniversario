@@ -23,6 +23,7 @@ class Funcionario(models.Model):
 
     def __str__(self):
         return self.nome
+        # return f"{self.nome} (CBO: {self.cbo})"
 
     #Classe responsavel pelas liberações de acesso
     class Meta:
