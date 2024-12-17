@@ -51,11 +51,11 @@
                     <h3 class="text-center mb-4">Novo Funcionario</h3>
                 {% endif %}
                 
-                <p class="text-start fw-normal mb-3">Preencher os dados manualmente</p>
+                <p class="text-start fw-normal mb-3">Preencha os dados manualmente</p>
                 
                 <!-- Nome -->
                 <div class="mb-3">
-                    <label for="{{ form_funcionarios.nome.id_for_nome }}" class="form-label">Nome*</label>
+                    <label for="{{ form_funcionarios.nome.id_for_label }}" class="form-label">Nome*</label>
                     <input 
                         type="text" 
                         name="nome" 
@@ -73,7 +73,7 @@
 
                 <!-- Email -->
                 <div class="mb-3">
-                    <label for="{{ form_funcionario.email.if_for_email }}" class="form-label">E-mail*</label>
+                    <label for="{{ form_funcionario.email.id_for_label }}" class="form-label">E-mail*</label>
                     <input 
                         type="email" 
                         name="email" 
@@ -92,14 +92,14 @@
 
                 <!-- Data de Nascimento -->
                 <div class="mb-3">
-                    <label for="form_funcionario.data_nascimento.if_for_data" class="form-label">Data de Nascimento*</label>
+                    <label for="form_funcionario.data_nascimento.id_for_label" class="form-label">Data de Nascimento*</label>
                     <input 
-                        type="text" 
+                        type="date" 
                         name="data_nascimento" 
                         id="id_data_nascimento" 
                         class="form-control" 
-                        value="{{ form_funcionario.data_nascimento.value|date:'d/m/Y' }}" 
-                        placeholder="Selecione uma data"
+                        value="{{ form_funcionario.data_nascimento.value.date|date:'Y-m-d'}}"
+                        placeholder="dd/mm/aaaa"
                         required>
                     {% if form_funcionario.data_nascimento.errors %}
                         <div class="text-danger small">
@@ -110,14 +110,14 @@
 
                 <!--Data de Admissão-->
                 <div class="mb-3">
-                    <label for="{{ form_funcionario.data_admissao.if_for_label }}" class="form-label">Data de Admissão</label>
+                    <label for="{{ form_funcionario.data_admissao.id_for_label }}" class="form-label">Data de Admissão</label>
                     <input 
-                        type="text" 
+                        type="date" 
                         name="data_admissao" 
                         id="id_data_admissao" 
                         class="form-control" 
-                        value="{{ form_funcionario.data_admissao.value|date:'d/m/Y' }}"
-                        placeholder="Selecione uma data">
+                        value="{{ form_funcionario.data_admissao.value|date:'Y-m-d' }}"
+                        placeholder="dd/mm/aaaa">
                     {% if form_funcionario.data_admissao.errors %}
                     <div class="text-danger small">
                         {{ form_funcionario.data_admissao.errors }}
@@ -127,7 +127,7 @@
 
                 <!--Função-->
                 <div class="mb-3">
-                    <label for="{{ form_funcionario.funcao.if_for_label }}" class="form-label">Função</label>
+                    <label for="{{ form_funcionario.funcao.id_for_label }}" class="form-label">Função</label>
                     <input 
                         type="text" 
                         name="funcao" 
@@ -144,8 +144,8 @@
 
                 <!-- CBO -->
                 <div class="mb-3">
-                    <label for="{{ form_funcionario.cbo.if_for_label }}" class="form-label">CBO</label>
-                    <h4 class="form-label fw-normal">---</h4>
+                    <label for="{{ form_funcionario.cbo.id_for_label }}" class="form-label">CBO</label>
+                    <h4 class="form-label fw-normal">{{ form_funcionario.instance.cbo|default:'---' }}</h4>
                     {% if form_funcionario.cbo.errors %}
                     <div class="text-danger small">
                         {{ form_funcionario.cbo.errors }}
@@ -159,6 +159,7 @@
                     {% else %}
                         Adicionar Funcionário
                     {% endif %}
+
                 </button>
 
             </form>
@@ -238,6 +239,20 @@
             emailError.style.display = 'None'; //esconde o erro
         }
     });
+
+    //Converter o recebimento de data no formato yyyy/mm/dd para exibir em dd/mm/yyyy
+    document.querySelectorAll('input[type="date"]').forEach(input =>{
+        input.addEventListener('change', function() {
+            const date = new Date(this.value);
+            const formatteDate = date.toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+            this.value = formatteDate; //Altera o valor visível no campo
+        })
+    })
+    
 
 </script>
 

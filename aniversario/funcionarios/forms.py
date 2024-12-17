@@ -21,14 +21,34 @@ class FuncionarioForm(forms.ModelForm):
 
     #Definindo um widget para data com formato customizado
     data_nascimento = forms.DateField(
-        widget=forms.DateInput(attrs={'type':'date', 'class': 'form-control'}, format='%d/%m/%Y'),
-        input_formats=['%Y/%m/%d']
+        widget=forms.DateInput(attrs={'class': 'form-control'}, format='%d/%m/%Y'),
+        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        error_messages={
+            'invalid': 'Insira uma data válida no formato DD/MM/YYYY.',
+            'required': 'Este campo é obrigatório.',
+        }
     )
     data_admissao = forms.DateField(
-        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}, format='%d/%m/%Y'),
-        input_formats=['%Y/%m/%d']
+        widget=forms.DateInput(attrs={'class': 'form-control'}, format='%d/%m/%Y'),
+        input_formats=['%d/%m/%Y', '%Y-%m-%d'],
+        error_messages={
+            'invalid': 'Insira uma data válida no formato DD/MM/YYYY.',
+        }
     )
 
 
 class UploadExcelForm(forms.Form):
-    excel_file = forms.FileField(label="Selecione o arquivo Excel")
+    excel_file = forms.FileField(
+        label="Selecione o arquivo Excel",
+        error_messages={
+            'required': 'Por favor, selecione um arquivo.',
+            'invalid': 'Envie um arquivo válido.',
+        })
+    
+    #Validação para garantir que o arquivo seja excel
+    def validacao_excel_file(self):
+        excel_file = self.cleaned_data.get('excel_file')
+        if not excel_file.name.endswith(('.xls', '.xlsx')):
+            raise forms.ValidationError("O arquivo deve ser no formato .xls ou .xlsx.")
+        #Retorna o arquivo validando
+        return excel_file
