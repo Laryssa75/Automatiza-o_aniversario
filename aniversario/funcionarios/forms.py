@@ -21,7 +21,7 @@ class FuncionarioForm(forms.ModelForm):
 
     #Definindo um widget para data com formato customizado
     data_nascimento = forms.DateField(
-        widget=forms.DateInput(attrs={'class': 'form-control'}, format='%d/%m/%Y'),
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}, format='%d/%m/%Y'),
         input_formats=['%d/%m/%Y', '%Y-%m-%d'],
         error_messages={
             'invalid': 'Insira uma data válida no formato DD/MM/YYYY.',

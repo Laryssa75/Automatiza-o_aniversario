@@ -100,10 +100,11 @@ def agenda_envio_email():
 
     # Configura o próximo horário de execução
     proxima_execucao = timezone.now().replace(hour=16, minute=35, second=0, microsecond=0)
-    # if proxima_execucao < timezone.now():
-    #     proxima_execucao += timedelta(days=1)
+    print(proxima_execucao)
+    if proxima_execucao < timezone.now():
+        proxima_execucao += timedelta(days=1)
 
-    #proxima_execucao = timezone.now()
+    proxima_execucao = timezone.now()
 
     #Verifica se a tarefa já existe tarefa agendada
     if check_agenda():

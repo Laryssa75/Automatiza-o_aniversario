@@ -1,10 +1,6 @@
-#Essa parte do código é onde ficará as configurações para os envio dos 
-#emails usando a biblioteca celery
-
 from __future__ import absolute_import, unicode_literals
 import os
 from celery import Celery
-#from celery.schedules import crontab
 
 
 #Definindo o módulo Django para o Celery usar
@@ -42,3 +38,6 @@ worker_cancel_long_running_tasks_on_connection_loss = True
 @app.task(bind=True)
 def debug_task(self):
     print(f'Request: {self.request!r}')
+
+
+

@@ -127,3 +127,26 @@ permissions = Permission.objects.all()
 for perm in permissions:
     print(perm.codename)
 
+
+from funcionarios.models import Funcionario
+
+# Filtrar registros com data_nascimento nulo
+funcionarios_com_null = Funcionario.objects.filter(data_nascimento__isnull=True)
+print(f"Funcionarios com data nascimento nula: {funcionarios_com_null}")
+
+# Atualizar manualmente os valores
+for funcionario in funcionarios_com_null:
+    funcionario.data_nascimento = '2000-01-01'  # Ou outro valor padrão
+    funcionario.save()
+
+from funcionarios.models import Funcionario
+from funcionarios.utils import obter_proximo_cbo, reorganizar_cbo
+
+# Testa o próximo CBO
+proximo_cbo = obter_proximo_cbo()
+print("Próximo CBO disponível:", proximo_cbo)
+
+# Reorganiza os CBOs
+reorganizar_cbo()
+print("CBOs reorganizados com sucesso.")
+

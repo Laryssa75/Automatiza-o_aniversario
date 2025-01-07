@@ -1,13 +1,11 @@
 from django.db import models
-from datetime import datetime
 
 
-# Create your models here.
 
 class Funcionario(models.Model):
     nome = models.CharField(max_length=100)
     email= models.EmailField()
-    data_nascimento = models.DateField()
+    data_nascimento = models.DateField(null=False, blank=False)
     foto = models.ImageField(upload_to='foto/' , blank=True, null=True)
     arquivo_pdf = models.FileField(upload_to='pdf/' , blank=True, null=True)
     cbo = models.AutoField(primary_key=True)
@@ -24,7 +22,6 @@ class Funcionario(models.Model):
 
     def __str__(self):
         return self.nome
-        # return f"{self.nome} (CBO: {self.cbo})"
 
     #Classe responsavel pelas liberações de acesso
     class Meta:

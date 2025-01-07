@@ -1,6 +1,6 @@
 import pandas as pd
 import logging
-from django.contrib.auth.decorators import permission_required, login_required
+from django.contrib.auth.decorators import permission_required
 from django.contrib.auth import authenticate, login 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import logout
@@ -9,7 +9,7 @@ from django.contrib import messages
 from .models import Funcionario
 from .forms import FuncionarioForm, UploadExcelForm
 from .tasks import enviar_email_aniversario
-from datetime import datetime
+from .utils import obter_proximo_cbo, reorganizar_cbo
 
 
 
@@ -43,12 +43,6 @@ def login_view(request):
             return render(request, 'funcionarios/login.html') 
     
     return render(request, 'funcionarios/login.html') #Renderiza a página de login
-
-#Calculo do cbo
-def obter_proximo_cbo():    
-   #Obtem o maior valor existente de cbo
-    max_cbo = Funcionario.objects.aggregate(models.Max('cbo'))['cbo__max']
-    return max_cbo + 1 if max_cbo is not None else 1 
 
 
 @permission_required('funcionarios.importar_funcionarios', raise_exception=True)
@@ -84,12 +78,13 @@ def importar_funcionarios(request, cbo=None):
         if 'manual' in request.POST:
             if form_funcionario.is_valid():
                 funcionario = form_funcionario.save(commit=False)
-                if not cbo:
+                if not funcionario.cbo:
                     funcionario.cbo = obter_proximo_cbo()  # Atribui o próximo valor de cbo
                 form_funcionario.save()  # Salva o funcionário
                 messages.success(request, "Funcionário adicionado com sucesso!")
                 tarefa_enfileirada = True
             else:
+                form_funcionario = FuncionarioForm(initial={'cbo': cbo})
                 messages.error(request, "Erro ao adicionar funcionário.")
 
 
@@ -136,10 +131,12 @@ def importar_funcionarios(request, cbo=None):
     if tarefa_enfileirada:
         enviar_email_aniversario.apply_async()
 
-    return render(request, 'funcionarios/importar_funcionario.html', {
+    contexto = {
         'form_funcionario': form_funcionario,
         'form_import': form_import,
-    })
+        'cbo_gerado': obter_proximo_cbo(),
+    }
+    return render(request, 'funcionarios/importar_funcionario.html', contexto)
 
 
 def menu_cadastros(request):
@@ -152,41 +149,52 @@ def menu_cadastros(request):
 
 def editar_funcionarios(request, cbo):
     funcionario = get_object_or_404(Funcionario, cbo=cbo)
-    print(f"Funcionario encontrado: {funcionario.nome}")
-    print(f"cbo encontrado: {funcionario.cbo}")
-    print(f"data nascimento encontrado: {funcionario.data_nascimento}")
+    print(f"Dados do funcionário: {funcionario.nome}, {funcionario.email}, {funcionario.data_nascimento}")
+
 
     if request.method == 'POST':
-        form_editar = FuncionarioForm(request.POST, instance=funcionario)
         print(f"dados recebidos:  {request.POST}")
+        form_editar = FuncionarioForm(request.POST, instance=funcionario)
+        print(f"Formulário vinculado: {form_editar.is_bound}")
         print(f"Formulário validado: {form_editar.is_valid()}")
         print(f"Erros no formulário: {form_editar.errors}")
         # Criação de formulário com os dados do POST
-        print(f"Funcionario encontrado: {funcionario.nome}")
-        print(f"Funcionario encontrado: {funcionario.data_nascimento}")
+        print(f"Dados do funcionário: {funcionario.nome}, {funcionario.email}, {funcionario.data_nascimento}")
+
+        print(f"Formulário: {form_editar.initial}")  # Isso vai mostrar os dados iniciais carregados no formulário
+
 
         if form_editar.is_valid():
-            print(f"Funcionario encontrado: {funcionario.cbo}")
+            print(f"Dados do funcionário: {funcionario.nome}, {funcionario.email}, {funcionario.data_nascimento}")
+            print(f"Formulário: {form_editar.initial}")  # Isso vai mostrar os dados iniciais carregados no formulário
+
             form_editar.save()  # Salva o funcionário com os dados corrigidos
             messages.success(request, "Funcionário alterado com sucesso.")
             return redirect('menu_cadastros')
         else:
             messages.error(request, "Falha ao editar o cadastro do funcionário.")
-            print(form_editar.errors)  #Para depuração
+            print(f"erros editar: {form_editar.errors}")  #Para depuração
 
-    else:
-        # Quando o método não for POST, preenche o formulário com os dados do funcionário
-        form_editar = FuncionarioForm(instance=funcionario)
+            form_editar = FuncionarioForm(instance=funcionario)    
 
-    return render(request, 'funcionarios/importar_funcionario.html', {
-        'form_funcionario': form_editar,
-    })
+            # Adicione o retorno aqui, garantindo que o formulário seja renderizado novamente com os erros
+            return render(request, 'funcionarios/importar_funcionario.html', {
+                'form_funcionario': form_editar,})
+    
+    # else:
+    #     # Quando o método não for POST, preenche o formulário com os dados do funcionário
+    #     form_editar = FuncionarioForm(instance=funcionario)
+
+    #     return render(request, 'funcionarios/importar_funcionario.html', {
+    #         'form_funcionario': form_editar,
+    #     })
 
 
 def excluir_funcionario(request, cbo):
     if request.method == "POST":
         funcionario = get_object_or_404(Funcionario, cbo=cbo)
         funcionario.delete()
+        reorganizar_cbo()
         messages.success(request, "Funcionário excluído com sucesso.")
     return redirect('menu_cadastros')
 
