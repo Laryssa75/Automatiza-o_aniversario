@@ -1,4 +1,5 @@
 {% extends "funcionarios/base.html" %}
+{% include "funcionarios/modal_Confexclusao.html" %}
 
 {% load static %}
 <!DOCTYPE html>
@@ -7,9 +8,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Menu de Cadastro de Funcionários{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet"> -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.8.0/font/bootstrap-icons.min.css" rel="stylesheet">
+
+    <!-- Bootstrap CSS -->
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha384-dyB8m7mMjN77CGXFn9NY8pe6u3DAE4+QU6Zs4OmwAy5Rx4hOMxECELGm2R1pP3TR" crossorigin="anonymous">
+
+
 </head>
 <body>
 
@@ -59,20 +65,19 @@
                                 <td>{{ funcionario.data_admissao|default:"Não informado" }}</td>
                                 <td>
                                     <!--Botão para excluir funcionário-->
-                                    <form method="POST" action="{% url 'excluir_funcionario' funcionario.cbo %}" class="d-inline">
+                                    <!-- <form method="POST" action="{% url 'excluir_funcionario' funcionario.cbo %}" class="d-inline"> -->
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#confirmDeleteModal{{ funcionario.cbo }}" data-cbo="{{ funcionario.cbo }}" title="Excluir">
+                                        <i class="fa-solid fa-trash" style="font-size: 35px;"></i>
+                                    </button>     
+                                    <!-- </form> -->
 
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-danger btn-sm" title="Excluir">
-                                            <i class="bi bi-trash" style="font-size: 35px;"></i>
-                                        </button>     
-                                    </form>
 
-
-                                    <form method="POST" action="{% url 'editar_funcionarios' funcionario.cbo %}" class="d-inline">
+                                    <form method="GET" action="{% url 'editar_funcionarios' funcionario.cbo %}" class="d-inline">
                                         {% csrf_token %}
                                         <!-- {{ form_import.as_p }} -->
                                         <button type="submit" class="btn btn-primary btn-sm" title="Editar">
-                                            <i class="bi bi-pencil" style="font-size: 35px;"></i>
+                                            <i class="fa-solid fa-pencil" style="font-size: 35px;"></i>
                                         </button>
                                     </form>
                                 </td>
@@ -90,8 +95,12 @@
         
     </div>
     {% endblock %}
+    <!-- JavaScript (Opcional) -->
+       <!-- jQuery primeiro, depois Popper.js, depois Bootstrap JS -->
+       <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+       <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+       <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+   
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-    
 </body>
 </html>

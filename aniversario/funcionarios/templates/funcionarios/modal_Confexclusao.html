@@ -1,0 +1,68 @@
+<td>
+    <!--Botão para abrir o modal-->
+    <button type="button"
+        class="btn btn-danger"
+        data-toggle="modal"
+        data-target="#confirmDeleteModal{{ funcionario.cbo }}"
+        data-cbo="{{ funcionario.cbo }}"
+        title="Excluir"> 
+        <i class="fa-solid fa-trash" style="font-size: 35px"></i>
+    </button>
+</td>
+
+<!--Modal de confirmação de exclusão-->
+<div class="modal fade" 
+    id="confirmDeleteModal{{ funcionario.cbo }}" 
+    tabindex="-1" 
+    aria-labelledby="confirmDeleteModal{{ funcionario.cbo }}" 
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmDeleteModal{{ funcionario.cbo }}">Confirmar Exclusão</h5>
+                <button 
+                    type="button" 
+                    class="close" 
+                    data-bs-dismiss="modal"
+                    aria-label="Fechar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Tem certeza de que deseja excluir este funcionário <strong>{{ funcionario.nome }}</strong>?
+                Esta ação não pode ser desfeita.
+            </div>
+            <div class="modal-footer">
+                <button 
+                    type="button"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal">Cancelar</button>
+                <form method="POST"
+                    action="{% url 'excluir_funcionario' funcionario.cbo %}">
+                    {% csrf_token %}
+                    <!--Botão de confirmação-->
+                    <button type="submit" class="btn btn-danger">Excluir</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- JavaScript para o controle do modal de exclusão -->
+<script>
+    $(document).ready(function() {
+        // Quando o modal for aberto
+        $('[data-toggle="modal"]').on('click', function (event) {
+            print("botão de exclusão clicado")
+            var button = $(event.target); // botão que acionou o modal
+            var cbo = button.data('cbo'); // obtém o 'cbo' do funcionário do botão
+            var modal = $('#confirmDeleteModal' + cbo); // encontra o modal correspondente
+            print(modal + "modal encontrado")
+            modal.find('.modal-footer form').attr('action', '{% url "excluir_funcionario" cbo %}'); // corrige a URL de ação
+        });
+
+        $('#confirmDeleteModal11').modal('show'); // Substitua '123' pelo cbo real
+
+    });
+</script>
