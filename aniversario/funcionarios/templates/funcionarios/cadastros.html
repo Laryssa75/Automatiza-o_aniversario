@@ -1,27 +1,26 @@
 {% extends "funcionarios/base.html" %}
-{% include "funcionarios/modal_Confexclusao.html" %}
 
 {% load static %}
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Menu de Cadastro de Funcionários{% endblock %}</title>
-
-    <!-- Bootstrap CSS -->
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-
-<!-- Font Awesome -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha384-dyB8m7mMjN77CGXFn9NY8pe6u3DAE4+QU6Zs4OmwAy5Rx4hOMxECELGm2R1pP3TR" crossorigin="anonymous">
-
-
-</head>
-<body>
-
-    {% block content %}
-    
-    <div class="container text-center align-items-center min-vh-100">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}Menu de Cadastro de Funcionários{% endblock %}</title>
+        
+        <!-- Bootstrap CSS -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap/@5.3.0/dist/css/bootstrap.min.css" integrity="sha384-vyFq6YYB5U0EORqOR5UF9q1BMVUV7CZC2Jz3VGyZXmHRrhVyTGJCDWQtP8jhnDFl" crossorigin="anonymous">
+        
+        <!-- Font Awesome -->
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
+            
+    </head>
+    <body>
+        
+        {% block content %}
+        
+        <div class="container text-center align-items-center min-vh-100">
+            {% include "funcionarios/modal_Confexclusao.html" %}
         <div class="col-lg-6 col-md-8 col-sm-12 mx-auto">
             <div class="container mt-4">
                 <div class="row w-100">
@@ -64,14 +63,21 @@
                                 <td>{{ funcionario.funcao|default:"Não informado" }}</td>
                                 <td>{{ funcionario.data_admissao|default:"Não informado" }}</td>
                                 <td>
+                                    <!-- <form method="POST" action="{% url 'excluir_funcionario' funcionario.cbo %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="button" class="btn btn-danger btn-sm confirm-exclusao" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal{{ funcionario.cbo }}" data-cbo="{{ funcionario.cbo }}" title="Excluir">
+                                            <i class="fa-solid fa-trash" style="font-size: 35px;"></i>
+                                        </button>     
+                                    </form> -->
+                                    
                                     <!--Botão para excluir funcionário-->
-                                    <!-- <form method="POST" action="{% url 'excluir_funcionario' funcionario.cbo %}" class="d-inline"> -->
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#confirmDeleteModal{{ funcionario.cbo }}" data-cbo="{{ funcionario.cbo }}" title="Excluir">
-                                        <i class="fa-solid fa-trash" style="font-size: 35px;"></i>
-                                    </button>     
-                                    <!-- </form> -->
-
+                                    <button type="button"
+                                        class="btn btn-danger btn-sm confirm-exclusao"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#confirmDeleteModal{{ funcionario.cbo }}"
+                                        title="Excluir"> 
+                                        <i class="fa-solid fa-trash" style="font-size: 20px;"></i>
+                                    </button>
 
                                     <form method="GET" action="{% url 'editar_funcionarios' funcionario.cbo %}" class="d-inline">
                                         {% csrf_token %}
@@ -94,13 +100,53 @@
         </div>
         
     </div>
+
     {% endblock %}
     <!-- JavaScript (Opcional) -->
        <!-- jQuery primeiro, depois Popper.js, depois Bootstrap JS -->
-       <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+       <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha384-5uPPhbZxHnB8YUbOj0EDvEMZWmlFZ1yKMm3BQF7++o3rBDjF0Eo5HIr3b9pTIHeK" crossorigin="anonymous"></script>
        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-       <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
-   
+       <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-Mr44Flw8zFJ9hbHYk+sRUpPLcURJoGZTmfC+ZrPcSjqkjtF64Wl9wBvtDLZ2ZwP4" crossorigin="anonymous"></script>
 
+
+    <script>
+        document.querySelectorAll('.confirm-exclusao').forEach(function(button) {
+            button.addEventListener('click', function() {
+                const cbo = this.getAttribute('data-cbo');
+                const confirmButton = document.querySelector(`#confirmDeleteButton${cbo}`);
+                
+                // Limpa eventos anteriores para evitar duplicação
+                confirmButton.replaceWith(confirmButton.cloneNode(true));
+                confirmButton.addEventListener('click', function() {
+                    fetch(`/excluir-funcionario/${cbo}/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                        },
+                        body: JSON.stringify({ cbo: cbo })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'ok') {
+                            alert('Cadastro excluído com sucesso!');
+                            document.getElementById('cadastro-' + cbo).remove();
+                        } else {
+                            alert('Erro ao excluir item.');
+                        }
+                    })
+                    .catch(err => {
+                        alert('Erro ao enviar requisição.');
+                    });
+
+                    // Fechar o modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById(`confirmDeleteModal${cbo}`));
+                    modal.hide();
+                });
+            });
+        });
+    </script>
+    
+    
 </body>
 </html>
