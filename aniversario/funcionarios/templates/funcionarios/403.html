@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>403 - Acesso Negado</title>
+</head>
+<body>
+    <!--Bloco de mensagem-->
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="alert {{ message.tags}}">{{ message }}</div>
+            {% endfor %}
+            
+        </div>
+        {% endif %}    
+        
+    <h1>403 - Acesso Negado</h1>
+    <p>{{ exception }}</p> <!--Renderiza a mensagem do Permission Denied-->
+    <a href="{url 'home'}"> Voltar para a página inicial</a>
+</body>
+</html>

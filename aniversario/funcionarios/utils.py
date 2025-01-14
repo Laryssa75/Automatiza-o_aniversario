@@ -3,7 +3,7 @@ from .models import Funcionario
 #Calculo do cbo ao inserir
 def obter_proximo_cbo():  
     #Obtem todos os números de cbo existentes
-    cbos_existentes = Funcionario.objects.values_list('cbo', flat=True).order_by('cbo')
+    cbos_existentes = list(Funcionario.objects.values_list('cbo', flat=True).order_by('cbo'))
 
     #Verifica as colunas no intervalo
     for i in range(1, len(cbos_existentes)):

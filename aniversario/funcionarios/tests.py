@@ -98,7 +98,7 @@ user = User.objects.create_user(
 
 user.save()
 
-print("Usuário craido com sucesso!")
+print("Usuário criado com sucesso!")
 
 #concedendo permissao de um função especifica para um usuário via shell
 from django.contrib.auth.models import User, Permission
@@ -107,14 +107,14 @@ from django.contrib.auth.models import User, Permission
 user = User.objects.get(username='maria')
 
 # Encontre a permissão personalizada
-permission = Permission.objects.get(codename='importar_funcionarios')
+permission = Permission.objects.get(codename='cadastrar_funcionarios')
 
 # Atribua a permissão
 user.user_permissions.add(permission)
 user.save()
 
 #Verificando se a permissão foi concedida
-if user.has_perm('funcionarios.importar_funcionarios'):
+if user.has_perm('funcionarios.cadastrar_funcionarios'):
     print("Usuário tem permissão")
 else:
     print("Usuário NÃO tem permissão")
@@ -150,3 +150,39 @@ print("Próximo CBO disponível:", proximo_cbo)
 reorganizar_cbo()
 print("CBOs reorganizados com sucesso.")
 
+#Verificar as permissões que o usuário tem
+# Abrir o shell
+python manage.py shell
+
+# Importar os modelos
+from django.contrib.auth.models import User
+
+# Obter o usuário
+user = User.objects.get(username='maria')
+
+# Verificar se tem permissão
+tem_permissao = user.has_perm('funcionarios.cadastrar_funcionarios')
+print(tem_permissao)
+
+from django.contrib.auth.models import Permission
+
+# Listar as permissões associadas à app 'funcionarios'
+permissions = Permission.objects.filter(content_type__app_label='funcionarios')
+for perm in permissions:
+    print(perm.codename)  # Vai exibir o codename das permissões
+
+<!-- CBO -->
+                <div class="mb-4">
+                    <label for="{{ form_funcionario.cbo.id_for_label }}" class="form-label">CBO</label>
+                    <h4 class="form-label fw-normal">{{ cbo_gerado }}</h4>
+                    <input 
+                        type="hidden" 
+                        name="cbo"
+                        class="form-control"
+                        value="{{ cbo_gerado }}">
+                    {% if form_funcionario.cbo.errors %}
+                    <div class="text-danger small">
+                        {{ form_funcionario.cbo.errors }}
+                    </div>
+                    {% endif %}
+                </div>

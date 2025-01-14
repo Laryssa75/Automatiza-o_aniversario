@@ -1,6 +1,7 @@
 import pandas as pd
 import logging
 from django.contrib.auth.decorators import permission_required
+from django.core.exceptions import PermissionDenied
 from django.contrib.auth import authenticate, login 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import logout
@@ -36,7 +37,7 @@ def login_view(request):
             if user.is_staff: #Verifica se é admin
                 return redirect('admin:index') #Redireciona para o painel de admin
             else:
-                return redirect('importar_funcionarios')  
+                return redirect('cadastrar_funcionarios')  
         else:        
             #Caso o login falhe
             messages.error(request, "Usuário ou senha inválidos")
@@ -45,8 +46,8 @@ def login_view(request):
     return render(request, 'funcionarios/login.html') #Renderiza a página de login
 
 
-@permission_required('funcionarios.importar_funcionarios', raise_exception=True)
-def importar_funcionarios(request, cbo=None):
+@permission_required('funcionarios.cadastrar_funcionarios', raise_exception=True)
+def cadastrar_funcionarios(request, cbo=None):
 
     #Formularios
     form_funcionario = FuncionarioForm(request.POST or None)
@@ -116,14 +117,14 @@ def importar_funcionarios(request, cbo=None):
                     print("Funcionarios importados com sucesso!")
 
 
-                    #return redirect('importar_funcionarios')
+                    #return redirect('cadastrar_funcionarios')
 
                     #Chama a tarefa celery para envio de email de aniversario
                     #enviar_email_aniversario.apply_async()
                 
                 except Exception as e:
-                    messages.error(request, f"Erro ao importar os dados os funcionários: {e}")
-                    print("Erro ao importar o arquivo excel!")
+                    messages.error(request, f"Erro ao cadastrar os dados os funcionários: {e}")
+                    print("Erro ao cadastrar o arquivo excel!")
 
 
 
@@ -136,7 +137,7 @@ def importar_funcionarios(request, cbo=None):
         'form_import': form_import,
         'cbo_gerado': obter_proximo_cbo(),
     }
-    return render(request, 'funcionarios/importar_funcionario.html', contexto)
+    return render(request, 'funcionarios/cadastrar_funcionario.html', contexto)
 
 
 def menu_cadastros(request):
@@ -148,9 +149,9 @@ def menu_cadastros(request):
 
 
 def editar_funcionarios(request, cbo):
+    # Busca o funcionário com o 'cbo' fornecido
     funcionario = get_object_or_404(Funcionario, cbo=cbo)
     print(f"Dados do funcionário: {funcionario.nome}, {funcionario.email}, {funcionario.data_nascimento}")
-
 
     if request.method == 'POST':
         print(f"dados recebidos:  {request.POST}")
@@ -158,34 +159,30 @@ def editar_funcionarios(request, cbo):
         print(f"Formulário vinculado: {form_editar.is_bound}")
         print(f"Formulário validado: {form_editar.is_valid()}")
         print(f"Erros no formulário: {form_editar.errors}")
-        # Criação de formulário com os dados do POST
         print(f"Dados do funcionário: {funcionario.nome}, {funcionario.email}, {funcionario.data_nascimento}")
 
-        print(f"Formulário: {form_editar.initial}")  # Isso vai mostrar os dados iniciais carregados no formulário
-
-
         if form_editar.is_valid():
-            print(f"Dados do funcionário: {funcionario.nome}, {funcionario.email}, {funcionario.data_nascimento}")
-            print(f"Formulário: {form_editar.initial}")  # Isso vai mostrar os dados iniciais carregados no formulário
-
             form_editar.save()  # Salva o funcionário com os dados corrigidos
             messages.success(request, "Funcionário alterado com sucesso.")
             return redirect('menu_cadastros')
         else:
             messages.error(request, "Falha ao editar o cadastro do funcionário.")
-            print(f"erros editar: {form_editar.errors}")  #Para depuração
+            print(f"Erros ao editar: {form_editar.errors}")  # Para depuração
+    
+    else:
+        # Se for um GET, cria o formulário com os dados do funcionário
+        form_editar = FuncionarioForm(instance=funcionario)
 
-            form_editar = FuncionarioForm(instance=funcionario)    
-
-            # Adicione o retorno aqui, garantindo que o formulário seja renderizado novamente com os erros
-            return render(request, 'funcionarios/importar_funcionario.html', {
-                'form_funcionario': form_editar,})
+    # Retorna o formulário no caso de GET ou erro de validação
+    return render(request, 'funcionarios/cadastrar_funcionario.html', {
+        'form_funcionario': form_editar,
+    })
     
     # else:
     #     # Quando o método não for POST, preenche o formulário com os dados do funcionário
     #     form_editar = FuncionarioForm(instance=funcionario)
 
-    #     return render(request, 'funcionarios/importar_funcionario.html', {
+    #     return render(request, 'funcionarios/cadastrar_funcionario.html', {
     #         'form_funcionario': form_editar,
     #     })
 

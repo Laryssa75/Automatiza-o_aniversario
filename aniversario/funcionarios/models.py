@@ -26,5 +26,5 @@ class Funcionario(models.Model):
     #Classe responsavel pelas liberações de acesso
     class Meta:
         permissions = [
-            ("importar_funcionarios", "Pode importar funcionários")
+            ("cadastrar_funcionarios", "Pode cadastrar funcionários")
         ]
