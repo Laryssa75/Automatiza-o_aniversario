@@ -1,5 +1,6 @@
 from django import forms
 from .models import Funcionario
+from .models import Usuario
 
 class FuncionarioForm(forms.ModelForm):
     class Meta:
@@ -52,3 +53,18 @@ class UploadExcelForm(forms.Form):
             raise forms.ValidationError("O arquivo deve ser no formato .xls ou .xlsx.")
         #Retorna o arquivo validando
         return excel_file
+
+class UsuarioForm(forms.ModelForm):
+    class Meta:
+        model =  Usuario
+        fields = ['usuario', 'senha_usuario', 'setor', 'data_criarUsu']
+        widgets = {
+            'perfil': forms.RadioSelect(choices=Usuario.PERFIL_CHOICES),
+        }
+
+    senha_usuario = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control'}),
+        error_messages={
+            'required': 'Este campo é obrigatório.',
+        }
+    )

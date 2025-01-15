@@ -1,0 +1,151 @@
+{% extends "funcionarios/base.html" %}
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Usuario</title>
+
+    <!-- Bootstrap -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css" integrity="sha384-vyFq6YYB5U0EORqOR5UF9q1BMVUV7CZC2Jz3VGyZXmHRrhVyTGJCDWQtP8jhnDFl" crossorigin="anonymous">
+</head>
+<body class="btn-lg">
+    {% block content %}
+
+    <div class="container d-flex justify-content-center align-items-center min-vh-70">
+        <div class="row w-100">
+            <div class="col-lg-6 col-md-8 col-sm-12 mx-auto">
+                <h2 class="text-center mb-4">Criar Usuário</h2>
+
+                <!--Formulario de criação de formulário-->
+                <form method="POST" 
+                    action="{% url criar_usuario %}">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="{{ form_usuario.id_usuario.id_for_label }}" class="form-label">ID</label>
+                        {% if form_usuario.instance.id_usuario %}
+                            <h4 class="form-label fw-normal">{{ form_usuario.instance.id_usuario }}</h4>
+                        {% else %}
+                            <input type="hidden" name="idUsu" value="{{ idUsu_gerado }}" readonly>
+                            <h4 class="form-label fw-normal">{{ idUsu_gerado }}</h4>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form_usuario.usuario.id_for_label }}" class="form-label">Usuario*</label>
+                        <input 
+                        type="text" 
+                        name="usuario" 
+                        id="id_usu"
+                        class="form-control"
+                        value="{{form_usuario.usuario.value|default_if_none:'' }}"
+                        placeholder="Digite um nome de usuário que pode ser alfa numérico"
+                        required>
+                        {% if form_usuario.usuario.errors %}
+                        <div class="text-danger small">
+                            {{ form_usuario.nome.errors }}        
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form_usuario.id_senha.id_for_label }}" class="form-label">Senha*</label>
+                        <input 
+                            type="password" 
+                            name="senhaUsu" 
+                            id="id_senhaUsu"
+                            class="form-control"
+                            value="{{ form_usuario.senha_usuario.valeu }}"
+                            placeholder="Crie uma senha com numeros e letras"
+                            required>
+                        {% if form_usuario.senha_usuario.errors %}
+                        <div class="text-danger small">
+                            {{ form_usuario.senha_usuario.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form_usuario.data_criarUsu.id_for_label }}" class="form-label">Data de Cadastro do Usuário</label>
+                        <input 
+                            type="date" 
+                            name="data_criarUsu" 
+                            id="id_criarDataUsu"
+                            class="form-control"
+                            value="{{ form_usuario.data_criarUsu.valeu|date:'Y-m-d' }}"
+                            placeholder="dd/mm/aaaa">
+                        {% if form_usuario.data_criarUsu.errors %}
+                        <div class="text-danger small">
+                            {{ form_usuario.data_criarUsu.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form_usuario.setor.id_for_label }}" class="form-label">Setor</label>
+                        <input 
+                            type="text" 
+                            name="setor" 
+                            id="id_setor"
+                            class="form-control"
+                            value="{{ form_usuario.setor.valeu }}"
+                            placeholder="Digite o setor do usuário">
+                        {% if form_usuario.setor.errors %}
+                        <div class="text-danger small">
+                            {{ form_usuario.setor.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form_usuario.perfil.id_for_label }}" class="form-label">Perfil de Permissão do Usuário*</label>
+                        <div id="perfil">
+                            <div class="form-check">
+                                <input 
+                                    type="radio"
+                                    name="perfil"
+                                    id="perfil_admin"
+                                    class="form-check-input"
+                                    value="admin"
+                                    {% if form_usuario.perfil.value == 'admin' %}checked{% endif %}>
+                                <label for="perfil_admin" class="form-check-label">Administrador</label>
+                            </div>
+                            <div class="form-check">
+                                <input 
+                                    type="radio" 
+                                    name="perfil" 
+                                    id="perfil_basico"
+                                    class="form-check-input"
+                                    value="basico"
+                                    {% if form_usuario.perfil.value == 'basico' %}checked{% endif %}>
+                                <label for="form_usuario.perfil.id_for_label" class="form-label">Básico</label>
+                            </div>
+                        </div>    
+                    
+                        <h6 class="text-muted mt-2">
+                            Selecione qual tipo de permissão desejado para o usuário.
+                        </h6>
+                        <h6 class="text-muted mt-2">
+                            O perfil administrador possui total acesso e o perfil básico tem acesso limitado.
+                        </h6>
+
+                        {% if form_usuario.perfil.errors %}
+                        <div class="text-danger small">
+                            {{ form_usuario.perfil.errors }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+
+                    <button type="submit" class="btn btn-primary w-100" style="background-color: #c56205 !important; border: #b85c07;">
+                        Criar
+                    </button>
+                    
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

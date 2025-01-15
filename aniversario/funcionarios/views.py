@@ -1,16 +1,16 @@
 import pandas as pd
 import logging
-from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.decorators import permission_required, login_required
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth import authenticate, login 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import logout
 from django.db import models
 from django.contrib import messages
-from .models import Funcionario
-from .forms import FuncionarioForm, UploadExcelForm
+from .models import Funcionario, Usuario
+from .forms import FuncionarioForm, UploadExcelForm, UsuarioForm
 from .tasks import enviar_email_aniversario
-from .utils import obter_proximo_cbo, reorganizar_cbo
+from .utils import obter_proximo_cbo, reorganizar_cbo, obter_proximo_idUSu, reorganizar_idUSu
 
 
 
@@ -60,20 +60,6 @@ def cadastrar_funcionarios(request, cbo=None):
         funcionario = get_object_or_404(Funcionario, cbo=cbo)
         form_funcionario = FuncionarioForm(request.POST or None, instance=funcionario)
 
-    if form_funcionario.is_valid():
-        funcionario = form_funcionario.save(commit=False)
-        if not cbo: #se não for edição, atribui o próximo CBO
-            funcionario.cbo = obter_proximo_cbo() #Atribui o próximo valor de cbo
-            form_funcionario.save() #Salva o funcionario
-
-            #Alteração para que o envio do email seja imediato quando se insere os dados dos funcionários via web
-            #enviar_email_aniversario.apply_async()
-
-            tarefa_enfileirada = True #Marca que a tarefa será enfileirada
-
-            return redirect('menu_cadastros')
-
-
     if request.method == 'POST':
         # Envio de dados manual
         if 'manual' in request.POST:
@@ -81,12 +67,13 @@ def cadastrar_funcionarios(request, cbo=None):
                 funcionario = form_funcionario.save(commit=False)
                 if not funcionario.cbo:
                     funcionario.cbo = obter_proximo_cbo()  # Atribui o próximo valor de cbo
-                form_funcionario.save()  # Salva o funcionário
-                messages.success(request, "Funcionário adicionado com sucesso!")
+                form_funcionario.save()  
+                messages.success(request, "Funcionário criado com sucesso!")
                 tarefa_enfileirada = True
+                return redirect('menu_cadastros')
             else:
                 form_funcionario = FuncionarioForm(initial={'cbo': cbo})
-                messages.error(request, "Erro ao adicionar funcionário.")
+                messages.error(request, "Erro ao criar funcionário.")
 
 
         #Se for envio de dados via arquivo excel
@@ -133,19 +120,13 @@ def cadastrar_funcionarios(request, cbo=None):
         enviar_email_aniversario.apply_async()
 
     contexto = {
-        'form_funcionario': form_funcionario,
+        'form_funcionario': form_funcionario, #avaliar se está sendo utilizado
         'form_import': form_import,
-        'cbo_gerado': obter_proximo_cbo(),
+        'cbo_gerado': obter_proximo_cbo(), #avaliar se está sendo utilizado
     }
     return render(request, 'funcionarios/cadastrar_funcionario.html', contexto)
 
 
-def menu_cadastros(request):
-    #Buscar todos os funcionáris cadastrados
-    funcionarios = Funcionario.objects.all()
-    print(funcionarios)
-    logging.info(funcionarios)
-    return render(request, 'funcionarios/cadastros.html', {'funcionarios' : funcionarios})
 
 
 def editar_funcionarios(request, cbo):
@@ -194,6 +175,47 @@ def excluir_funcionario(request, cbo):
         reorganizar_cbo()
         messages.success(request, "Funcionário excluído com sucesso.")
     return redirect('menu_cadastros')
+
+def menu_cadastros(request):
+    #Buscar todos os funcionáris cadastrados
+    funcionarios = Funcionario.objects.all()
+    print(funcionarios)
+    logging.info(funcionarios)
+    return render(request, 'funcionarios/cadastros.html', {'funcionarios' : funcionarios})
+
+# @login_required
+def criar_usuario(request, id_usuario=None):
+
+    #Formulários
+    form_usuario = UsuarioForm(request.POSTS or None)
+
+    if id_usuario:
+        usuario = get_object_or_404(Usuario, id_usuario=id_usuario)
+        form_usuario = UsuarioForm(request.POST or None, instance=usuario)
+
+    if request.method == 'POST':
+        if form_usuario.is_valid():
+            usuario = form_usuario.save(commit=False)
+            if not usuario.id_usuario:
+                usuario.id_usuario = obter_proximo_idUSu() #Atribui o próximo n de idUsu
+            form_usuario.save()
+            messages.success(request, "Usuário criado com sucesso!")
+            # return redirect('menu_usuarios')
+        else:
+            form_usuario = UsuarioForm(initial={'id_usuario': id_usuario})
+            messages.error(request, "Erro ao criar usuário.")
+    
+    contexto = {
+        'form_usuario': form_usuario,
+        'idUsu_gerado': obter_proximo_idUSu(),
+    }
+
+    return render(request, 'funcionarios/criar_usuario.html', contexto)
+
+@login_required
+def menu_usuarios(request):
+    usuario = Usuario.objects.all()
+    return render(request, 'admin/menu_usuarios.html', {'usuario': usuario})
 
 
 def logout_and_redirect(request):
