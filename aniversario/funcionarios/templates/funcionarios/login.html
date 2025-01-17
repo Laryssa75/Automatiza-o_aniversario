@@ -25,7 +25,7 @@
         {% endif %}
 
         <!--Formulário de login-->
-        <form method="POST" action="{% url 'login' %}">
+        <form method="POST" action="{% url 'funcionarios:login' %}">
             {% csrf_token %}
 
             <div class="mb-3">
@@ -48,6 +48,7 @@
             <div class="text-center nt-3">
                 <button type="submit" class="btn btn-secondary w-100" style="background-color:#c56205 !important; border: #b85c07;">Entrar</button>
             </div>
+
         </form>
 
         <!-- Botão para login administrativo -->

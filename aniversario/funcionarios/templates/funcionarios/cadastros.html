@@ -27,7 +27,7 @@
                 <div class="row w-100">
                     <h2 class="text-center mb-4">Menu de Cadastro de Funcionários</h2>
                     <a 
-                    href="{% url 'cadastrar_funcionarios' %}" 
+                    href="{% url 'funcionarios:cadastrar_funcionarios' %}" 
                     class="btn btn-primary text-center" 
                     id="botao_novo_cadastro"
                     style="background-color:#c56205 !important; border: #b85c07;">Cadastrar novo funcionário</a>
@@ -40,7 +40,7 @@
         <div class="container mt-4">
             <h2 class="text-center mt-2"> Cadastros</h2>
             <div class="table-responsive mt-4">
-                <form id="actionForm" method="POST" action="{% url 'menu_cadastros' %}">
+                <form id="actionForm" method="POST" action="{% url 'funcionarios:menu_cadastros' %}">
                     {% csrf_token %}
                     <table class="table table-bordered">
                         <thead>
@@ -64,7 +64,7 @@
                                 <td>{{ funcionario.funcao|default:"Não informado" }}</td>
                                 <td>{{ funcionario.data_admissao|default:"Não informado" }}</td>
                                 <td>
-                                    <!-- <form method="POST" action="{% url 'excluir_funcionario' funcionario.cbo %}" class="d-inline">
+                                    <!-- <form method="POST" action="{% url 'funcionarios:excluir_funcionario' funcionario.cbo %}" class="d-inline">
                                         {% csrf_token %}
                                         <button type="button" class="btn btn-danger btn-sm confirm-exclusao" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal{{ funcionario.cbo }}" data-cbo="{{ funcionario.cbo }}" title="Excluir">
                                             <i class="fa-solid fa-trash" style="font-size: 35px;"></i>
@@ -81,10 +81,10 @@
                                     </button>
 
                                     <!--Botão para editar funcionario-->
-                                    <a href="{% url 'editar_funcionarios' funcionario.cbo %}" class="btn btn-primary btn-sm" title="Editar">
+                                    <a href="{% url 'funcionarios:editar_funcionarios' funcionario.cbo %}" class="btn btn-primary btn-sm" title="Editar">
                                         <i class="fa-solid fa-pencil" style="font-size: 20px;"></i>
                                     </a>
-                                    <!-- <form method="POST" action="{% url 'editar_funcionarios' funcionario.cbo %}" class="d-inline">
+                                    <!-- <form method="POST" action="{% url 'funcionarios:editar_funcionarios' funcionario.cbo %}" class="d-inline">
                                         {% csrf_token %}
                                         {{ form_funcionario.as_p }}
                                         <button type="submit" class="btn btn-primary btn-sm" title="Editar">

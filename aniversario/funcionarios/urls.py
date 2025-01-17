@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 
+app_name = 'funcionarios'
 
 urlpatterns = [
     #exemplo de rota
@@ -12,6 +13,6 @@ urlpatterns = [
     path('menu-cadastros/', views.menu_cadastros, name='menu_cadastros'),
     path('excluirfuncionario/<int:cbo>/', views.excluir_funcionario, name='excluir_funcionario'),
     #path('enviar-email-aniversariantes/', views.enviar_emails_aniversariantes_view, name='enviar_emails_aniversariantes'),
-    path('admin/criar_usuario/', views.criar_usuario, name='criar_usuario'),
-    path('admin/menu_usuarios/', views.menu_usuarios, name='menu_usuarios'),
+    path('admin/criar-usuario/', views.criar_usuario, name='criar_usuario'),
+    path('admin/menu-usuarios/', views.menu_usuarios, name='menu_usuarios'),
 ]

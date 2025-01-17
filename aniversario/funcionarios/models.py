@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import RegexValidator
+from django.contrib.auth.hashers import make_password
 
 
 class Funcionario(models.Model):
@@ -15,8 +16,9 @@ class Funcionario(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.cbo:
+            # Gera o próximo valor de cbo manualmente
             max_cbo = Funcionario.objects.aggregate(models.Max('cbo'))['cbo__max']
-            self.cbo = max_cbo +1 if max_cbo else 1
+            self.cbo = max_cbo + 1 if max_cbo else 1
         super().save(*args, **kwargs)
 
 
@@ -31,12 +33,12 @@ class Funcionario(models.Model):
 
 class Usuario(models.Model):
     #Validador para caracteres alfanuméricos
-    ALPHANUMERIC_VALIDATOR = RegexValidator(
+    VALIDADOR_ALFANUMERICO = RegexValidator(
         regex=r'^[a-zA-Z0-9]*$',
         message="Este campo deve conter apenas letras e números." 
     )
 
-    PERFIL_CHOICES = [
+    TIPO_USUARIO = [
         ('admin', 'Administrador'),
         ('basico', 'Básico'),
     ]
@@ -45,24 +47,30 @@ class Usuario(models.Model):
         max_length=100,
         blank=False,
         null=False,
-        validators=[ALPHANUMERIC_VALIDATOR],
+        validators=[VALIDADOR_ALFANUMERICO],
         help_text="Digite um nome de usuário alfanumérico.")
     id_usuario = models.AutoField(primary_key=True)
     senha_usuario = models.CharField(
-        max_length=20,
+        max_length=128,
         blank=False,
         null=False,
-        validators=[ALPHANUMERIC_VALIDATOR],
-        help_text="Crie uma senha alfanumérica."
+        validators=[VALIDADOR_ALFANUMERICO],
+        help_text="Crie uma senha segura."
         )
-    perfil = models.CharField(max_length=50, choices=PERFIL_CHOICES)
+    perfil = models.CharField(max_length=50, choices=TIPO_USUARIO, default='basico')
     setor = models.CharField(max_length=100)
     data_criarUsu = models.DateField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
+        # Gera o próximo valor para o id_usuario, se não tiver
         if not self.id_usuario:
             max_id_usuario = Usuario.objects.aggregate(models.Max('id_usuario'))['id_usuario__max']
             self.id_usuario = max_id_usuario + 1 if max_id_usuario else 1
+        
+        # Atribui a senha criptografada, se for nova
+        if not self.pk:
+            self.senha_usuario = make_password(self.senha_usuario)
+
         super().save(*args, **kwargs)
 
     def __str__(self):

@@ -7,6 +7,12 @@ class FuncionarioForm(forms.ModelForm):
         model = Funcionario
         fields = ['nome', 'email', 'data_nascimento', 'data_admissao', 'funcao']
         exclude = ['cbo'] # excluio campo cbo do formulario para nao ser editado
+       
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'id_usuario' in self.fields:
+            self.fields['id_usuario'].widget.attrs['readonly'] = True
 
     email = forms.EmailField(
         widget=forms.EmailInput(
@@ -54,12 +60,13 @@ class UploadExcelForm(forms.Form):
         #Retorna o arquivo validando
         return excel_file
 
+
 class UsuarioForm(forms.ModelForm):
     class Meta:
         model =  Usuario
-        fields = ['usuario', 'senha_usuario', 'setor', 'data_criarUsu']
+        fields = ['usuario', 'senha_usuario', 'perfil','setor', 'data_criarUsu']
         widgets = {
-            'perfil': forms.RadioSelect(choices=Usuario.PERFIL_CHOICES),
+            'perfil': forms.RadioSelect(choices=Usuario.TIPO_USUARIO),
         }
 
     senha_usuario = forms.CharField(
@@ -68,3 +75,9 @@ class UsuarioForm(forms.ModelForm):
             'required': 'Este campo é obrigatório.',
         }
     )
+
+    #torna o campo id_usuario somente leitura
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     if 'id_usuario' in self.fields:
+    #         self.fields['id_usuario'].widget.attrs['readonly'] = True

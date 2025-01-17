@@ -20,7 +20,7 @@
                 Esta ação não pode ser desfeita.
             </div>
             <div class="modal-footer">
-                <form method="POST" action="{% url 'excluir_funcionario' funcionario.cbo %}">
+                <form method="POST" action="{% url 'funcionarios:excluir_funcionario' funcionario.cbo %}">
                     {% csrf_token %}
                     <button 
                         type="button" 

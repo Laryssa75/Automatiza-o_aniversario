@@ -1,17 +1,17 @@
 import pandas as pd
 import logging
-from django.contrib.auth.decorators import permission_required, login_required
-from django.core.exceptions import PermissionDenied
-from django.contrib.auth import authenticate, login 
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import logout
-from django.db import models
 from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import permission_required
+from django.core.exceptions import PermissionDenied
+from django.shortcuts import render, redirect, get_object_or_404
+from django.db import models
+from django.utils import timezone
 from .models import Funcionario, Usuario
 from .forms import FuncionarioForm, UploadExcelForm, UsuarioForm
 from .tasks import enviar_email_aniversario
 from .utils import obter_proximo_cbo, reorganizar_cbo, obter_proximo_idUSu, reorganizar_idUSu
-
+from .decorators import verificar_permissaoAcesso
 
 
 #serve para disparar envio de email manualmente
@@ -37,7 +37,7 @@ def login_view(request):
             if user.is_staff: #Verifica se é admin
                 return redirect('admin:index') #Redireciona para o painel de admin
             else:
-                return redirect('cadastrar_funcionarios')  
+                return redirect('funcionarios:cadastrar_funcionarios')  
         else:        
             #Caso o login falhe
             messages.error(request, "Usuário ou senha inválidos")
@@ -70,9 +70,9 @@ def cadastrar_funcionarios(request, cbo=None):
                 form_funcionario.save()  
                 messages.success(request, "Funcionário criado com sucesso!")
                 tarefa_enfileirada = True
-                return redirect('menu_cadastros')
+                return redirect('funcionarios:menu_cadastros')
             else:
-                form_funcionario = FuncionarioForm(initial={'cbo': cbo})
+                # form_funcionario = FuncionarioForm(initial={'cbo': cbo})
                 messages.error(request, "Erro ao criar funcionário.")
 
 
@@ -90,7 +90,7 @@ def cadastrar_funcionarios(request, cbo=None):
                                 nome=row['Nome'],
                                 email=row['Email'],
                                 data_nascimento=row['Data Nascimento'],
-                                data_admissao=row.get['Data Admissão', None],
+                                data_admissao=row.get('Data Admissão', None),
                                 funcao=row.get['Função', None],
                                 cbo=obter_proximo_cbo() #atribui o próximo valor de id sequencial
                             )
@@ -104,7 +104,7 @@ def cadastrar_funcionarios(request, cbo=None):
                     print("Funcionarios importados com sucesso!")
 
 
-                    #return redirect('cadastrar_funcionarios')
+                    #return redirect('funcionarios:cadastrar_funcionarios')
 
                     #Chama a tarefa celery para envio de email de aniversario
                     #enviar_email_aniversario.apply_async()
@@ -127,25 +127,19 @@ def cadastrar_funcionarios(request, cbo=None):
     return render(request, 'funcionarios/cadastrar_funcionario.html', contexto)
 
 
-
-
 def editar_funcionarios(request, cbo):
     # Busca o funcionário com o 'cbo' fornecido
     funcionario = get_object_or_404(Funcionario, cbo=cbo)
     print(f"Dados do funcionário: {funcionario.nome}, {funcionario.email}, {funcionario.data_nascimento}")
 
     if request.method == 'POST':
-        print(f"dados recebidos:  {request.POST}")
-        form_editar = FuncionarioForm(request.POST, instance=funcionario)
-        print(f"Formulário vinculado: {form_editar.is_bound}")
-        print(f"Formulário validado: {form_editar.is_valid()}")
-        print(f"Erros no formulário: {form_editar.errors}")
-        print(f"Dados do funcionário: {funcionario.nome}, {funcionario.email}, {funcionario.data_nascimento}")
 
+        form_editar = FuncionarioForm(request.POST, instance=funcionario)
+    
         if form_editar.is_valid():
             form_editar.save()  # Salva o funcionário com os dados corrigidos
             messages.success(request, "Funcionário alterado com sucesso.")
-            return redirect('menu_cadastros')
+            return redirect('funcionarios:menu_cadastros')
         else:
             messages.error(request, "Falha ao editar o cadastro do funcionário.")
             print(f"Erros ao editar: {form_editar.errors}")  # Para depuração
@@ -174,7 +168,8 @@ def excluir_funcionario(request, cbo):
         funcionario.delete()
         reorganizar_cbo()
         messages.success(request, "Funcionário excluído com sucesso.")
-    return redirect('menu_cadastros')
+    return redirect('funcionarios:menu_cadastros')
+
 
 def menu_cadastros(request):
     #Buscar todos os funcionáris cadastrados
@@ -183,36 +178,42 @@ def menu_cadastros(request):
     logging.info(funcionarios)
     return render(request, 'funcionarios/cadastros.html', {'funcionarios' : funcionarios})
 
-# @login_required
+
+#@verificar_permissaoAcesso
 def criar_usuario(request, id_usuario=None):
 
     #Formulários
-    form_usuario = UsuarioForm(request.POSTS or None)
+    form_usuario = UsuarioForm(request.POST or None)
 
-    if id_usuario:
-        usuario = get_object_or_404(Usuario, id_usuario=id_usuario)
-        form_usuario = UsuarioForm(request.POST or None, instance=usuario)
+    try:
+        if id_usuario:
+            usuario = get_object_or_404(Usuario, id_usuario=id_usuario)
+            form_usuario = UsuarioForm(request.POST or None, instance=usuario)
 
-    if request.method == 'POST':
-        if form_usuario.is_valid():
-            usuario = form_usuario.save(commit=False)
-            if not usuario.id_usuario:
-                usuario.id_usuario = obter_proximo_idUSu() #Atribui o próximo n de idUsu
-            form_usuario.save()
-            messages.success(request, "Usuário criado com sucesso!")
-            # return redirect('menu_usuarios')
-        else:
-            form_usuario = UsuarioForm(initial={'id_usuario': id_usuario})
-            messages.error(request, "Erro ao criar usuário.")
-    
-    contexto = {
-        'form_usuario': form_usuario,
-        'idUsu_gerado': obter_proximo_idUSu(),
-    }
+        if request.method == 'POST':
+            if form_usuario.is_valid():
+                usuario = form_usuario.save(commit=False)
+                if not usuario.id_usuario:
+                    usuario.id_usuario = obter_proximo_idUSu() #Atribui o próximo n de idUsu
+                form_usuario.save()
+                messages.success(request, "Usuário criado com sucesso!")
+                # return redirect('funcionarios:menu_usuarios')
+            else:
+                form_usuario = UsuarioForm(initial={'id_usuario': id_usuario})
+                messages.error(request, "Erro ao criar usuário.")
+        
+        contexto = {
+            'form_usuario': form_usuario,
+            'idUsu_gerado': obter_proximo_idUSu(),
+            'data_atual': timezone.now().date(),
+        }
 
-    return render(request, 'funcionarios/criar_usuario.html', contexto)
+        return render(request, 'admin/criar_usuario.html', contexto)
+    except Exception as e:
+                    messages.error(request, f"Erro ao criar usuário: {e}")
+                    print("Erro ao criar usuário")
 
-@login_required
+@verificar_permissaoAcesso
 def menu_usuarios(request):
     usuario = Usuario.objects.all()
     return render(request, 'admin/menu_usuarios.html', {'usuario': usuario})
@@ -221,4 +222,4 @@ def menu_usuarios(request):
 def logout_and_redirect(request):
     logout(request)
     #return render (request, 'funcionarios/login.html') #esse caminho faz o caminho para o template login.html
-    return redirect('login') #esse caminho faz o redirecionamento da url
+    return redirect('funcionarios:login') #esse caminho faz o redirecionamento da url
