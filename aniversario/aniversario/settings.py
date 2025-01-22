@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     #'django_rq',
 
     #Apps do projeto
-    'funcionarios', #App para gerenciar funcionarios e enviar emails
+    # 'funcionarios', #App para gerenciar funcionarios e enviar emails
+    'funcionarios.apps.FuncionariosConfig',
 ]
 
 MIDDLEWARE = [

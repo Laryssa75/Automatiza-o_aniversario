@@ -8,11 +8,11 @@ class FuncionarioForm(forms.ModelForm):
         fields = ['nome', 'email', 'data_nascimento', 'data_admissao', 'funcao']
         exclude = ['cbo'] # excluio campo cbo do formulario para nao ser editado
        
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if 'id_usuario' in self.fields:
-            self.fields['id_usuario'].widget.attrs['readonly'] = True
+        if 'cbo' in self.fields:
+            self.fields['cbo'].widget.attrs['readonly'] = True
+    
 
     email = forms.EmailField(
         widget=forms.EmailInput(
@@ -68,6 +68,12 @@ class UsuarioForm(forms.ModelForm):
         widgets = {
             'perfil': forms.RadioSelect(choices=Usuario.TIPO_USUARIO),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'id_usuario' in self.fields:
+            self.fields['id_usuario'].widget.attrs['readonly'] = True
+
 
     senha_usuario = forms.CharField(
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),

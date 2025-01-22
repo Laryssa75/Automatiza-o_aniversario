@@ -48,26 +48,33 @@ def login_view(request):
 
 @permission_required('funcionarios.cadastrar_funcionarios', raise_exception=True)
 def cadastrar_funcionarios(request, cbo=None):
+    print(f"{Funcionario.objects}")  
+    print(Funcionario.objects.all())
 
     #Formularios
     form_funcionario = FuncionarioForm(request.POST or None)
     form_import = UploadExcelForm(request.POST or None, request.FILES or None)
 
     tarefa_enfileirada = False #Variável para rastrear se a tarefa será enfileirada
+    excel_file = None
 
     #Criação ou Edição de Funcionários     
     if cbo:
         funcionario = get_object_or_404(Funcionario, cbo=cbo)
         form_funcionario = FuncionarioForm(request.POST or None, instance=funcionario)
+        print(f"cbo gerado view: {cbo}")
 
     if request.method == 'POST':
         # Envio de dados manual
         if 'manual' in request.POST:
             if form_funcionario.is_valid():
+                print(f"{form_funcionario} é valido")
                 funcionario = form_funcionario.save(commit=False)
+                print(f"cbo gerado view: {cbo}")
                 if not funcionario.cbo:
                     funcionario.cbo = obter_proximo_cbo()  # Atribui o próximo valor de cbo
                 form_funcionario.save()  
+                print(f"cbo gerado view: {cbo}")
                 messages.success(request, "Funcionário criado com sucesso!")
                 tarefa_enfileirada = True
                 return redirect('funcionarios:menu_cadastros')
@@ -75,7 +82,7 @@ def cadastrar_funcionarios(request, cbo=None):
                 # form_funcionario = FuncionarioForm(initial={'cbo': cbo})
                 messages.error(request, "Erro ao criar funcionário.")
 
-
+            
         #Se for envio de dados via arquivo excel
         elif 'import' in request.POST and request.FILES.get('excel_file'):
             form_import = UploadExcelForm(request.POST, request.FILES)
@@ -91,7 +98,7 @@ def cadastrar_funcionarios(request, cbo=None):
                                 email=row['Email'],
                                 data_nascimento=row['Data Nascimento'],
                                 data_admissao=row.get('Data Admissão', None),
-                                funcao=row.get['Função', None],
+                                funcao=row.get('Função', None),
                                 cbo=obter_proximo_cbo() #atribui o próximo valor de id sequencial
                             )
 
@@ -120,9 +127,10 @@ def cadastrar_funcionarios(request, cbo=None):
         enviar_email_aniversario.apply_async()
 
     contexto = {
-        'form_funcionario': form_funcionario, #avaliar se está sendo utilizado
+        'form_funcionario': form_funcionario, 
         'form_import': form_import,
-        'cbo_gerado': obter_proximo_cbo(), #avaliar se está sendo utilizado
+        'cbo_gerado': obter_proximo_cbo(),
+        'arquivo_excel': excel_file, 
     }
     return render(request, 'funcionarios/cadastrar_funcionario.html', contexto)
 

@@ -1,6 +1,5 @@
 from django.db import models
 from django.core.validators import RegexValidator
-from django.contrib.auth.hashers import make_password
 
 
 class Funcionario(models.Model):
@@ -13,14 +12,6 @@ class Funcionario(models.Model):
     funcao = models.CharField(max_length=100, null=True)
     data_admissao = models.DateField(null=True, blank=True)
     id_tarefa_mail = models.CharField(max_length=255, null=True, blank=True)
-
-    def save(self, *args, **kwargs):
-        if not self.cbo:
-            # Gera o próximo valor de cbo manualmente
-            max_cbo = Funcionario.objects.aggregate(models.Max('cbo'))['cbo__max']
-            self.cbo = max_cbo + 1 if max_cbo else 1
-        super().save(*args, **kwargs)
-
 
     def __str__(self):
         return self.nome
@@ -61,17 +52,12 @@ class Usuario(models.Model):
     setor = models.CharField(max_length=100)
     data_criarUsu = models.DateField(null=True, blank=True)
 
-    def save(self, *args, **kwargs):
-        # Gera o próximo valor para o id_usuario, se não tiver
-        if not self.id_usuario:
-            max_id_usuario = Usuario.objects.aggregate(models.Max('id_usuario'))['id_usuario__max']
-            self.id_usuario = max_id_usuario + 1 if max_id_usuario else 1
-        
-        # Atribui a senha criptografada, se for nova
-        if not self.pk:
-            self.senha_usuario = make_password(self.senha_usuario)
+    # def save(self, *args, **kwargs):
+    #     #Atribui a senha criptografada, se for nova
+    #     if not self.pk:
+    #         self.senha_usuario = make_password(self.senha_usuario)
 
-        super().save(*args, **kwargs)
+    #     super().save(*args, **kwargs)
 
     def __str__(self):
         return self.usuario if self.usuario else f"Usuário {self.id_usuario}"
