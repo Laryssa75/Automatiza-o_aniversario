@@ -113,15 +113,20 @@ usuario = UsuarioBasico.objects.criar_usuario(usuario='andre', password='senha12
 
 
 #mudando o tipo de acesso de um usuario basico para admin
-from funcionarios.models import Usuario
+from funcionarios.models import UsuarioBasico
 from django.contrib.auth.hashers import make_password
-usuario = Usuario.objects.get(usuario="leticia")
-usuario.perfil = "admin"
-usuario.senha_usuario = make_password("senha123")
+
+usuario = UsuarioBasico(
+    usuario = "sabrina",
+    perfil = "admin",
+    setor = "adm"
+)
+usuario.password = make_password("senha123")
+usuario.save()
 if usuario.check_password("senha123"):
     print("senha correta")
 else:
-     print("senha errada")
+    print("senha errada")
 
 usuario.save()
 usuario = Usuario.objects.get(usuario="leticia")

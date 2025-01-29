@@ -7,12 +7,13 @@ from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db import models
 from django.utils import timezone
+from django.db.utils import IntegrityError
 from .models import Funcionario, UsuarioBasico
 from .forms import FuncionarioForm, UploadExcelForm, UsuarioForm, LoginAcessoForm
 from .tasks import enviar_email_aniversario
 from .utils import obter_proximo_cbo, reorganizar_cbo, obter_proximo_idUSu, reorganizar_idUSu
 from .decorators import verificar_permissaoAcesso
-
+import traceback
 
 #serve para disparar envio de email manualmente
 # async def enviar_emails_aniversariantes_view(request):
@@ -28,15 +29,15 @@ def home(request):
 
 def login_view(request):
     if request.method == 'POST':
-        form_login = LoginAcessoForm(request.POST)
+        form_usuario = LoginAcessoForm(request.POST)
 
-        if form_login.is_valid():
+        if form_usuario.is_valid():
             # usuario = request.POST.get('usuario')
             # senha_usuario = request.POST.get('password')
-            usuario = form_login.cleaned_data["usuario"]
-            senha_usuario = form_login.cleaned_data["password"]
+            usuario = form_usuario.cleaned_data["usuario"]
+            password = form_usuario.cleaned_data["password"]
 
-            user = authenticate(request, username=usuario, password=senha_usuario)
+            user = authenticate(request, username=usuario, password=password)
 
         if user is not None:
             login(request, user)
@@ -51,10 +52,10 @@ def login_view(request):
 
     else:
         #caso o método seja GET, cria o formulário vazio
-        form_login = LoginAcessoForm() 
+        form_usuario = LoginAcessoForm() 
 
     contexto = {
-        "form_login": form_login,
+        "form_usuario": form_usuario,
     }  
 
     return render(request, 'funcionarios/login.html', contexto) 
@@ -201,27 +202,41 @@ def menu_cadastros(request):
 def criar_usuario(request, id_usuario=None):
 
     try:
+
+        print("iniciando processo de criação de usuário...")
+        
+        idUsu_gerado = obter_proximo_idUSu()
+        print(f"próximo id gerado: {idUsu_gerado}")
+
         if id_usuario:
             usuario = get_object_or_404(UsuarioBasico, id_usuario=id_usuario)
             form_usuario = UsuarioForm(request.POST or None, instance=usuario)
+            print(f"editando usuário existente: {usuario.usuario}")
+
         else:
             form_usuario = UsuarioForm(request.POST or None)
+            print("criando novo usuário")
 
+        print(f"dados recebidos:", request.POST)
         if request.method == 'POST':
             if form_usuario.is_valid():
-                print(f"form_usuario é valido")
+                print(f"formulário valido")
                 usuario = form_usuario.save(commit=False)
+
                 if not usuario.id_usuario:
                     usuario.id_usuario = obter_proximo_idUSu() #Atribui o próximo n de idUsu
-                print(f"Usuário: {form_usuario.cleaned_data['usuario']}")
-                print(f"Perfil: {form_usuario.cleaned_data['perfil']}")
-                print(f"Setor: {form_usuario.cleaned_data['setor']}")
+            
+                if form_usuario.cleaned_data.get('password'):
+                    print("criptografando senha...")
+                    usuario.set_password(form_usuario.cleaned_data['password'])
+
                 usuario.save()
+                print(f"{usuario.usuario} salvo com sucesso!")
                 messages.success(request, "Usuário criado com sucesso!")
                 return redirect('funcionarios:menu_usuarios')
             else:
-                form_usuario = UsuarioForm(initial={'id_usuario': id_usuario})
                 messages.error(request, "Erro ao criar usuário.")
+                print(f"formulário inválido. Erros: ", form_usuario.errors)
         
         contexto = {
             'form_usuario': form_usuario,
@@ -231,8 +246,17 @@ def criar_usuario(request, id_usuario=None):
 
         return render(request, 'admin/criar_usuario.html', contexto)
     except Exception as e:
+        print(f"Erro de validação {e}")
         messages.error(request, f"Erro ao criar usuário: {e}")
-        print(f"Erro ao criar usuário {e}")
+    except ValueError as e:
+        print(f"Erro no banco de dados: {e}")
+        messages.error(request, f"Erro de validação: {e}")
+    except IntegrityError as e:
+        print(f"Erro inesperado: {e}")
+        print(traceback.format_exc())
+        messages.error(request, f"Erro de banco de dados: {e}")
+
+
         return redirect('funcionarios:menu_usuarios')
 
 

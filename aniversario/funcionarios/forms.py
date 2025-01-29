@@ -66,7 +66,7 @@ class UsuarioForm(forms.ModelForm):
 
     class Meta:
         model =  UsuarioBasico
-        fields = ['usuario', 'perfil','setor', 'data_criarUsu']
+        fields = ['usuario', 'perfil','setor', 'data_criarUsu', 'password']
         widgets = {
             'perfil': forms.RadioSelect(choices=UsuarioBasico.TIPO_USUARIO),
             'data_criarUsu': forms.DateInput(attrs={'type': 'date'}),
@@ -80,8 +80,9 @@ class UsuarioForm(forms.ModelForm):
 
     def clean_password(self):
         password = self.cleaned_data.get("password")
-        if len(password) < 15:
-            raise forms.ValidationError("A senha deve ter pelo menos 8 caracteres.")
+        if len(password) < 3:
+            print("a senha deve ter pelo menos 3 caracteres")
+            raise forms.ValidationError("A senha deve ter pelo menos 15 caracteres.")
         # Adicione validações extras se necessário
         return password
 

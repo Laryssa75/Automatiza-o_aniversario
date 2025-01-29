@@ -54,8 +54,8 @@
                         <tr>
                             <td>{{ usuario.id_usuario|default:"Não informado" }}</td>
                             <td>{{ usuario.usuario|default:"Não informado" }}</td>
-                            <td class="senha-usuario" data-senha="{{ usuario.senha_usuario }}">
-                                {% if usuario.senha_usuario  %}
+                            <td class="senha-usuario" data-senha="{{ usuario.password }}">
+                                {% if usuario.password  %}
                                     *****
                                 {% else %}
                                     não definida

@@ -5,7 +5,7 @@ class FuncionariosConfig(AppConfig):
     name = 'funcionarios'
 
     def ready(self):
-        print("Executando o método read do FuncionarioConfig do apps.py")
+        #print("Executando o método read do FuncionarioConfig do apps.py")
         import funcionarios.signals
 
     

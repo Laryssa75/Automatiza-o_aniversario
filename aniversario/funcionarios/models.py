@@ -36,13 +36,13 @@ class GerenciadorUsuarios(BaseUserManager):
             data_criarUsu = timezone.now(),
             **extra_fields
         )
-        user.set_password(password)
+        if password:
+            user.set_password(password)
         user.save(using = self._db)
         return user
     
     def UsuarioAdmin(self, usuario, password, **extra_fields):
         extra_fields.setdefault('is_admin', True)
-        extra_fields.setdefault('UsuarioAdmin', True)
         extra_fields.setdefault('perfil', 'admin')
         return self.criar_usuario(usuario, password, perfil="admin",  **extra_fields)
 
@@ -68,6 +68,7 @@ class UsuarioBasico(AbstractBaseUser, PermissionsMixin):
 
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
+    is_staff = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'usuario'
 
