@@ -20,7 +20,7 @@
 
                 <!--Formulario de criação de formulário-->
                 <form method="POST" 
-                    action="{% url 'funcionarios:criar_usuario' %}">
+                    action="{% if form_usuario.instance.id_usuario %}{% url 'funcionarios:criar_usuario' %}{% endif %}">
                     {% csrf_token %}
 
                     <div class="mb-3">
@@ -53,15 +53,14 @@
                         <label for="{{ form_usuario.senha_usuario.id_for_label }}" class="form-label">Senha*</label>
                         <input 
                             type="password" 
-                            name="senha_usuario" 
-                            id="id_senhaUsu"
+                            name="password" 
+                            id="{{ form_usuario.password.id_for_label }}"
                             class="form-control"
-                            value="{{ form_usuario.senha_usuario.value }}"
                             placeholder="Crie uma senha com numeros e letras"
                             required>
-                        {% if form_usuario.senha_usuario.errors %}
+                        {% if form_usuario.password.errors %}
                         <div class="text-danger small">
-                            {{ form_usuario.senha_usuario.errors }}
+                            {{ form_usuario.password.errors }}
                         </div>
                         {% endif %}
                     </div>

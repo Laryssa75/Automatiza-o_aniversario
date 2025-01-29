@@ -89,16 +89,74 @@ enviar_email_aniversario.apply()
 
 
 #criando um login de usuário normal válido
-from django.contrib.auth.models import User
-user = User.objects.create_user(
-    username='maria',
-    password='senha123',
-    email='larissa@sooretama.net'
+from funcionarios.models import UsuarioBasico
+user = UsuarioBasico.objects.criar_usuario(
+    usuario='maria',
+    senha_usuario='senha123',
+    perfil = 'admin'
 )
-
 user.save()
+print(f"Usuário {user.usuario} criado com sucesso!")
 
-print("Usuário criado com sucesso!")
+from funcionarios.models import UsuarioBasico
+user = UsuarioBasico.objects.get(usuario='joana')
+print(user.usuario, user.senha_usuario)
+
+from funcionarios.models import UsuarioBasico
+user = UsuarioBasico.objects.get(usuario='joana')
+print(user.check_password('senha123'))
+
+from funcionarios.models import UsuarioBasico
+
+# Usando o método do GerenciadorUsuarios para criar um usuário básico
+usuario = UsuarioBasico.objects.criar_usuario(usuario='andre', password='senha123', perfil='basico', setor='TI')
+
+
+#mudando o tipo de acesso de um usuario basico para admin
+from funcionarios.models import Usuario
+from django.contrib.auth.hashers import make_password
+usuario = Usuario.objects.get(usuario="leticia")
+usuario.perfil = "admin"
+usuario.senha_usuario = make_password("senha123")
+if usuario.check_password("senha123"):
+    print("senha correta")
+else:
+     print("senha errada")
+
+usuario.save()
+usuario = Usuario.objects.get(usuario="leticia")
+print(usuario.perfil)
+print(usuario.usuario)
+print(usuario.senha_usuario)
+
+
+usuario.senha_usuario = ("senha123")
+usuario.save()
+usuario = Usuario.objects.get(usuario="leticia")
+print(usuario.perfil)
+
+print(f"{usuario.usuario} {usuario.perfil} modificil perfil:{usuario.perfil} e senha{usuario.senha_usuario}")
+
+#mostrar todos os usuarios que estao dentro do banco
+from funcionarios.models import Usuario
+usuarios = Usuario.objects.all()
+for usuario in usuarios:
+    print(usuario)
+
+from funcionarios.models import Usuario
+
+# Verifica se o usuário existe
+usuario = Usuario.objects.filter(usuario="leticia").first()
+
+if usuario is not None:
+    if usuario.perfil == 'admin':
+        print(f"Usuário {usuario.usuario} tem acesso administrativo.")
+    else:
+        print(f"Usuário {usuario.usuario} tem acesso básico.")
+else:
+    print("Usuário não encontrado.")
+
+
 
 #concedendo permissao de um função especifica para um usuário via shell
 from django.contrib.auth.models import User, Permission

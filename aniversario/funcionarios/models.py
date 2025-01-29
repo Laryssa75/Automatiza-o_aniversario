@@ -1,5 +1,6 @@
 from django.db import models
-from django.core.validators import RegexValidator
+from django.utils import timezone
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
 
 class Funcionario(models.Model):
@@ -22,12 +23,31 @@ class Funcionario(models.Model):
             ("cadastrar_funcionarios", "Pode cadastrar funcionários")
         ]
 
-class Usuario(models.Model):
-    #Validador para caracteres alfanuméricos
-    VALIDADOR_ALFANUMERICO = RegexValidator(
-        regex=r'^[a-zA-Z0-9]*$',
-        message="Este campo deve conter apenas letras e números." 
-    )
+class GerenciadorUsuarios(BaseUserManager):
+    def criar_usuario(self, usuario, perfil, password,  **extra_fields):
+        if not usuario:
+            raise ValueError("O campo 'usuario' é obrigatório .")
+        if not perfil:
+            raise ValueError("O campo 'perfil' é obrigatório. ")
+        
+        user = self.model(
+            usuario=usuario,
+            perfil=perfil,
+            data_criarUsu = timezone.now(),
+            **extra_fields
+        )
+        user.set_password(password)
+        user.save(using = self._db)
+        return user
+    
+    def UsuarioAdmin(self, usuario, password, **extra_fields):
+        extra_fields.setdefault('is_admin', True)
+        extra_fields.setdefault('UsuarioAdmin', True)
+        extra_fields.setdefault('perfil', 'admin')
+        return self.criar_usuario(usuario, password, perfil="admin",  **extra_fields)
+
+
+class UsuarioBasico(AbstractBaseUser, PermissionsMixin):
 
     TIPO_USUARIO = [
         ('admin', 'Administrador'),
@@ -35,29 +55,29 @@ class Usuario(models.Model):
     ]
 
     usuario = models.CharField(
-        max_length=100,
+        max_length=150,
         blank=False,
+        unique=True,
         null=False,
-        validators=[VALIDADOR_ALFANUMERICO],
-        help_text="Digite um nome de usuário alfanumérico.")
+        verbose_name="Usuário",
+        help_text="Digite um nome de usuário com digitos e números.")
     id_usuario = models.AutoField(primary_key=True)
-    senha_usuario = models.CharField(
-        max_length=128,
-        blank=False,
-        null=False,
-        validators=[VALIDADOR_ALFANUMERICO],
-        help_text="Crie uma senha segura."
-        )
     perfil = models.CharField(max_length=50, choices=TIPO_USUARIO, default='basico')
     setor = models.CharField(max_length=100)
-    data_criarUsu = models.DateField(null=True, blank=True)
+    data_criarUsu = models.DateField(null=True, blank=True, default=timezone.now)
 
-    # def save(self, *args, **kwargs):
-    #     #Atribui a senha criptografada, se for nova
-    #     if not self.pk:
-    #         self.senha_usuario = make_password(self.senha_usuario)
+    is_active = models.BooleanField(default=True)
+    is_admin = models.BooleanField(default=False)
 
-    #     super().save(*args, **kwargs)
+    USERNAME_FIELD = 'usuario'
+
+    REQUIRED_FIELDS = ['perfil']
+
+    objects = GerenciadorUsuarios()
 
     def __str__(self):
         return self.usuario if self.usuario else f"Usuário {self.id_usuario}"
+    
+    @property
+    def is_staff(self):
+        return self.is_admin

@@ -1,5 +1,5 @@
 from .models import Funcionario
-from .models import Usuario
+from .models import UsuarioBasico
 
 #Calculo do cbo ao inserir
 def obter_proximo_cbo():  
@@ -31,7 +31,7 @@ def reorganizar_cbo():
 
 def obter_proximo_idUSu():
     #Obtem todos os números de idUsu existentes
-    idUsu_existente = list(Usuario.objects.values_list('id_usuario', flat=True).order_by('id_usuario'))
+    idUsu_existente = list(UsuarioBasico.objects.values_list('id_usuario', flat=True).order_by('id_usuario'))
 
     if not idUsu_existente:
         return 1
@@ -49,7 +49,7 @@ def obter_proximo_idUSu():
 
 def reorganizar_idUSu():
     #obtem todos os usuarios ordenados por idUsu
-    usuario = Usuario.objects.all().order_by('id_usuario')
+    usuario = UsuarioBasico.objects.all().order_by('id_usuario')
 
     #Atualiza o número de idUsu de forma sequencial
     for index, usuario in enumerate(usuario, start=1):

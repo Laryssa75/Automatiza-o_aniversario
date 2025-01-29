@@ -28,7 +28,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -41,7 +40,7 @@ INSTALLED_APPS = [
     #'django_rq',
 
     #Apps do projeto
-    # 'funcionarios', #App para gerenciar funcionarios e enviar emails
+    #'funcionarios', #App para gerenciar funcionarios e enviar emails
     'funcionarios.apps.FuncionariosConfig',
 ]
 
@@ -107,6 +106,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTH_USER_MODEL = 'funcionarios.UsuarioBasico'
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/

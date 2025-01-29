@@ -7,8 +7,8 @@ from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db import models
 from django.utils import timezone
-from .models import Funcionario, Usuario
-from .forms import FuncionarioForm, UploadExcelForm, UsuarioForm
+from .models import Funcionario, UsuarioBasico
+from .forms import FuncionarioForm, UploadExcelForm, UsuarioForm, LoginAcessoForm
 from .tasks import enviar_email_aniversario
 from .utils import obter_proximo_cbo, reorganizar_cbo, obter_proximo_idUSu, reorganizar_idUSu
 from .decorators import verificar_permissaoAcesso
@@ -28,28 +28,40 @@ def home(request):
 
 def login_view(request):
     if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
+        form_login = LoginAcessoForm(request.POST)
+
+        if form_login.is_valid():
+            # usuario = request.POST.get('usuario')
+            # senha_usuario = request.POST.get('password')
+            usuario = form_login.cleaned_data["usuario"]
+            senha_usuario = form_login.cleaned_data["password"]
+
+            user = authenticate(request, username=usuario, password=senha_usuario)
 
         if user is not None:
             login(request, user)
-            if user.is_staff: #Verifica se é admin
+            if user.is_admin: 
                 return redirect('admin:index') #Redireciona para o painel de admin
             else:
                 return redirect('funcionarios:cadastrar_funcionarios')  
         else:        
             #Caso o login falhe
-            messages.error(request, "Usuário ou senha inválidos")
+            messages.error(request, "Usuário ou senha inválidos.")
             return render(request, 'funcionarios/login.html') 
-    
-    return render(request, 'funcionarios/login.html') #Renderiza a página de login
+
+    else:
+        #caso o método seja GET, cria o formulário vazio
+        form_login = LoginAcessoForm() 
+
+    contexto = {
+        "form_login": form_login,
+    }  
+
+    return render(request, 'funcionarios/login.html', contexto) 
 
 
-@permission_required('funcionarios.cadastrar_funcionarios', raise_exception=True)
+#@permission_required('funcionarios.cadastrar_funcionarios', raise_exception=True)
 def cadastrar_funcionarios(request, cbo=None):
-    print(f"{Funcionario.objects}")  
-    print(Funcionario.objects.all())
 
     #Formularios
     form_funcionario = FuncionarioForm(request.POST or None)
@@ -62,7 +74,6 @@ def cadastrar_funcionarios(request, cbo=None):
     if cbo:
         funcionario = get_object_or_404(Funcionario, cbo=cbo)
         form_funcionario = FuncionarioForm(request.POST or None, instance=funcionario)
-        print(f"cbo gerado view: {cbo}")
 
     if request.method == 'POST':
         # Envio de dados manual
@@ -70,11 +81,10 @@ def cadastrar_funcionarios(request, cbo=None):
             if form_funcionario.is_valid():
                 print(f"{form_funcionario} é valido")
                 funcionario = form_funcionario.save(commit=False)
-                print(f"cbo gerado view: {cbo}")
+                
                 if not funcionario.cbo:
                     funcionario.cbo = obter_proximo_cbo()  # Atribui o próximo valor de cbo
                 form_funcionario.save()  
-                print(f"cbo gerado view: {cbo}")
                 messages.success(request, "Funcionário criado com sucesso!")
                 tarefa_enfileirada = True
                 return redirect('funcionarios:menu_cadastros')
@@ -190,22 +200,25 @@ def menu_cadastros(request):
 #@verificar_permissaoAcesso
 def criar_usuario(request, id_usuario=None):
 
-    #Formulários
-    form_usuario = UsuarioForm(request.POST or None)
-
     try:
         if id_usuario:
-            usuario = get_object_or_404(Usuario, id_usuario=id_usuario)
+            usuario = get_object_or_404(UsuarioBasico, id_usuario=id_usuario)
             form_usuario = UsuarioForm(request.POST or None, instance=usuario)
+        else:
+            form_usuario = UsuarioForm(request.POST or None)
 
         if request.method == 'POST':
             if form_usuario.is_valid():
+                print(f"form_usuario é valido")
                 usuario = form_usuario.save(commit=False)
                 if not usuario.id_usuario:
                     usuario.id_usuario = obter_proximo_idUSu() #Atribui o próximo n de idUsu
-                form_usuario.save()
+                print(f"Usuário: {form_usuario.cleaned_data['usuario']}")
+                print(f"Perfil: {form_usuario.cleaned_data['perfil']}")
+                print(f"Setor: {form_usuario.cleaned_data['setor']}")
+                usuario.save()
                 messages.success(request, "Usuário criado com sucesso!")
-                # return redirect('funcionarios:menu_usuarios')
+                return redirect('funcionarios:menu_usuarios')
             else:
                 form_usuario = UsuarioForm(initial={'id_usuario': id_usuario})
                 messages.error(request, "Erro ao criar usuário.")
@@ -218,13 +231,23 @@ def criar_usuario(request, id_usuario=None):
 
         return render(request, 'admin/criar_usuario.html', contexto)
     except Exception as e:
-                    messages.error(request, f"Erro ao criar usuário: {e}")
-                    print("Erro ao criar usuário")
+        messages.error(request, f"Erro ao criar usuário: {e}")
+        print(f"Erro ao criar usuário {e}")
+        return redirect('funcionarios:menu_usuarios')
 
-@verificar_permissaoAcesso
+
 def menu_usuarios(request):
-    usuario = Usuario.objects.all()
-    return render(request, 'admin/menu_usuarios.html', {'usuario': usuario})
+    #Busca todos os funcionários cadastrados
+    usuarios = UsuarioBasico.objects.all()
+    print(usuarios)
+    logging.info(usuarios)
+    return render(request, 'admin/menu_usuarios.html', {'usuarios': usuarios})
+
+
+#@verificar_permissaoAcesso
+def menu_usuarios(request):
+    usuarios = UsuarioBasico.objects.all()
+    return render(request, 'admin/menu_usuarios.html', {'usuarios': usuarios})
 
 
 def logout_and_redirect(request):
