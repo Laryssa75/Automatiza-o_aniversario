@@ -6,7 +6,7 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 class Funcionario(models.Model):
     nome = models.CharField(max_length=100)
     email= models.EmailField()
-    data_nascimento = models.DateField(null=False, blank=False)
+    data_nascimento = models.DateField()
     foto = models.ImageField(upload_to='foto/' , blank=True, null=True)
     arquivo_pdf = models.FileField(upload_to='pdf/' , blank=True, null=True)
     cbo = models.AutoField(primary_key=True)

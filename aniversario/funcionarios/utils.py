@@ -22,10 +22,10 @@ def obter_proximo_cbo():
 
 def reorganizar_cbo():
     #Obtem todos os funcionários ordenados por cbo
-    funcionarios = Funcionario.objects.all().order_by('cbo')
+    funcionario = Funcionario.objects.all().order_by('cbo')
 
     #Atualiza o número de cbo de forma sequencial
-    for index, funcionario in enumerate(funcionarios, start=1):
+    for index, funcionario in enumerate(funcionario, start=1):
         funcionario.cbo = index
         funcionario.save()
 
@@ -41,7 +41,7 @@ def obter_proximo_idUSu():
 
     #Verifica as colunas no intervalo
     for i in range(1, len(idUsu_existente)):
-        if idUsu_existente[i] != idUsu_existente[i -1] + 1:
+        if idUsu_existente[i] != idUsu_existente[i - 1] + 1:
             return idUsu_existente[i - 1] + 1
         
     return idUsu_existente[-1] +1 

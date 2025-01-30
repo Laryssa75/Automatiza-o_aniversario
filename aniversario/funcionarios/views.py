@@ -63,10 +63,70 @@ def login_view(request):
 
 #@permission_required('funcionarios.cadastrar_funcionarios', raise_exception=True)
 def cadastrar_funcionarios(request, cbo=None):
+    try:
 
-    #Formularios
-    form_funcionario = FuncionarioForm(request.POST or None)
-    form_import = UploadExcelForm(request.POST or None, request.FILES or None)
+        #messages.info("iniciando processo de cadastro de funcionário...")
+        print("iniciando criação de funcionarios...")
+
+        cbo_gerado = obter_proximo_cbo()
+        tarefa_enfileirada = False #Variável para rastrear se a tarefa será enfileirada
+        print(f"próximo id gerado: {cbo_gerado}" )
+
+        #Criação ou Edição de Funcionários     
+        if cbo:
+            funcionario = get_object_or_404(Funcionario, cbo=cbo)
+            form_funcionario = FuncionarioForm(request.POST or None, instance=funcionario)
+            print(f"editando usuário existente {funcionario.nome}")
+        else:
+            form_funcionario = FuncionarioForm(request.POST)
+
+
+        print(f"dados recebidos: {request.POST}")
+        if request.method == 'POST':
+            print("criando novo usuário")
+            if form_funcionario.is_valid():
+                print("formulário é valido")
+                funcionario = form_funcionario.save(commit=False)
+                print(f"funcionario cadastrados: {funcionario.nome}")
+                
+                if not funcionario.cbo:
+                    funcionario.cbo = obter_proximo_cbo()
+                    print(f"cbo gerado: {funcionario.cbo}")
+
+                funcionario.save()
+                print(f"dados do funcionario salvo: {funcionario.nome} {funcionario.cbo} {funcionario.data_nascimento}") 
+                messages.success(request, "Funcionário criado com sucesso!")
+                tarefa_enfileirada = True
+                return redirect('funcionarios:menu_cadastros')
+            else:
+                # form_funcionario = FuncionarioForm(initial={'cbo': cbo})
+                messages.error(request, "Erro ao criar funcionário.")
+                print("erros no formulário", form_funcionario.errors)
+
+                #return redirect('funcionarios:cadastrar_funcionarios')
+
+                #Chama a tarefa celery para envio de email de aniversario
+                #enviar_email_aniversario.apply_async()
+                
+        # ** Enfileira a tarefa após as operações de criação **
+        if tarefa_enfileirada:
+            enviar_email_aniversario.apply_async()
+
+        contexto = {
+            'form_funcionario': form_funcionario, 
+            'cbo_gerado': obter_proximo_cbo(),
+            'erros_form': form_funcionario.errors 
+        }
+        return render(request, 'funcionarios/cadastrar_funcionario.html', contexto)
+
+    except ValueError as e:
+        print(f"erro de validação: {e}")
+        messages.error(request, f"erro de validação {e}")
+
+
+
+def cadastrar_funcionarioExcel(request, cbo=None):
+    form_import = UploadExcelForm(request.POST or None, request.FILES or None) 
 
     tarefa_enfileirada = False #Variável para rastrear se a tarefa será enfileirada
     excel_file = None
@@ -74,63 +134,44 @@ def cadastrar_funcionarios(request, cbo=None):
     #Criação ou Edição de Funcionários     
     if cbo:
         funcionario = get_object_or_404(Funcionario, cbo=cbo)
-        form_funcionario = FuncionarioForm(request.POST or None, instance=funcionario)
+        form_import = UploadExcelForm(request.POST or None, instance=funcionario)
 
-    if request.method == 'POST':
-        # Envio de dados manual
-        if 'manual' in request.POST:
-            if form_funcionario.is_valid():
-                print(f"{form_funcionario} é valido")
-                funcionario = form_funcionario.save(commit=False)
+    #Se for envio de dados via arquivo excel
+    if 'import' in request.POST and request.FILES.get('excel_file'):
+                form_import = UploadExcelForm(request.POST, request.FILES)
+                if form_import.is_valid():
+                    excel_file = request.FILES['excel_file']
+                    try:
+                        df = pd.read_excel(excel_file)
+
+                        for _, row in df.iterrows():
+                            if 'NOME' in row and 'EMAIL' in row and 'DATA NASCIMENTO' in row:
+                                Funcionario.objects.create(
+                                    nome=row['Nome'],
+                                    email=row['Email'],
+                                    data_nascimento=row['Data Nascimento'],
+                                    data_admissao=row.get('Data Admissão', None),
+                                    funcao=row.get('Função', None),
+                                    cbo=obter_proximo_cbo() #atribui o próximo valor de id sequencial
+                                )
+
+                                tarefa_enfileirada = True #Marca que a tarefa será enfileirada
+
+                            else:
+                                messages.error(request, "Arquivo inválido: algumas colunas estão faltando.")
+                                break
+                            messages.success(request, "Funcionarios importados com sucesso!")
+                            print("Funcionarios importados com sucesso!")
+
+
+                        #return redirect('funcionarios:cadastrar_funcionarios')
+
+                        #Chama a tarefa celery para envio de email de aniversario
+                        #enviar_email_aniversario.apply_async()
                 
-                if not funcionario.cbo:
-                    funcionario.cbo = obter_proximo_cbo()  # Atribui o próximo valor de cbo
-                form_funcionario.save()  
-                messages.success(request, "Funcionário criado com sucesso!")
-                tarefa_enfileirada = True
-                return redirect('funcionarios:menu_cadastros')
-            else:
-                # form_funcionario = FuncionarioForm(initial={'cbo': cbo})
-                messages.error(request, "Erro ao criar funcionário.")
-
-            
-        #Se for envio de dados via arquivo excel
-        elif 'import' in request.POST and request.FILES.get('excel_file'):
-            form_import = UploadExcelForm(request.POST, request.FILES)
-            if form_import.is_valid():
-                excel_file = request.FILES['excel_file']
-                try:
-                    df = pd.read_excel(excel_file)
-
-                    for _, row in df.iterrows():
-                        if 'NOME' in row and 'EMAIL' in row and 'DATA NASCIMENTO' in row:
-                            Funcionario.objects.create(
-                                nome=row['Nome'],
-                                email=row['Email'],
-                                data_nascimento=row['Data Nascimento'],
-                                data_admissao=row.get('Data Admissão', None),
-                                funcao=row.get('Função', None),
-                                cbo=obter_proximo_cbo() #atribui o próximo valor de id sequencial
-                            )
-
-                            tarefa_enfileirada = True #Marca que a tarefa será enfileirada
-
-                        else:
-                            messages.error(request, "Arquivo inválido: algumas colunas estão faltando.")
-                            break
-                    messages.success(request, "Funcionarios importados com sucesso!")
-                    print("Funcionarios importados com sucesso!")
-
-
-                    #return redirect('funcionarios:cadastrar_funcionarios')
-
-                    #Chama a tarefa celery para envio de email de aniversario
-                    #enviar_email_aniversario.apply_async()
-                
-                except Exception as e:
-                    messages.error(request, f"Erro ao cadastrar os dados os funcionários: {e}")
-                    print("Erro ao cadastrar o arquivo excel!")
-
+                    except Exception as e:
+                        messages.error(request, f"Erro ao cadastrar os dados os funcionários: {e}")
+                        print("Erro ao cadastrar o arquivo excel!")
 
 
     # ** Enfileira a tarefa após as operações de criação **
@@ -138,12 +179,12 @@ def cadastrar_funcionarios(request, cbo=None):
         enviar_email_aniversario.apply_async()
 
     contexto = {
-        'form_funcionario': form_funcionario, 
         'form_import': form_import,
         'cbo_gerado': obter_proximo_cbo(),
-        'arquivo_excel': excel_file, 
+        'arquivo_excel': excel_file
     }
     return render(request, 'funcionarios/cadastrar_funcionario.html', contexto)
+
 
 
 def editar_funcionarios(request, cbo):
@@ -202,32 +243,28 @@ def menu_cadastros(request):
 def criar_usuario(request, id_usuario=None):
 
     try:
-
-        print("iniciando processo de criação de usuário...")
+        messages.info("iniciando processo de criação de usuário...")
         
         idUsu_gerado = obter_proximo_idUSu()
-        print(f"próximo id gerado: {idUsu_gerado}")
+        messages.info(f"próximo id gerado: {idUsu_gerado}")
 
         if id_usuario:
             usuario = get_object_or_404(UsuarioBasico, id_usuario=id_usuario)
             form_usuario = UsuarioForm(request.POST or None, instance=usuario)
-            print(f"editando usuário existente: {usuario.usuario}")
 
         else:
             form_usuario = UsuarioForm(request.POST or None)
-            print("criando novo usuário")
+            messages.info("criando novo usuário")
 
-        print(f"dados recebidos:", request.POST)
         if request.method == 'POST':
             if form_usuario.is_valid():
-                print(f"formulário valido")
+                messages.info(f"formulário valido")
                 usuario = form_usuario.save(commit=False)
 
                 if not usuario.id_usuario:
                     usuario.id_usuario = obter_proximo_idUSu() #Atribui o próximo n de idUsu
             
                 if form_usuario.cleaned_data.get('password'):
-                    print("criptografando senha...")
                     usuario.set_password(form_usuario.cleaned_data['password'])
 
                 usuario.save()
@@ -248,13 +285,6 @@ def criar_usuario(request, id_usuario=None):
     except Exception as e:
         print(f"Erro de validação {e}")
         messages.error(request, f"Erro ao criar usuário: {e}")
-    except ValueError as e:
-        print(f"Erro no banco de dados: {e}")
-        messages.error(request, f"Erro de validação: {e}")
-    except IntegrityError as e:
-        print(f"Erro inesperado: {e}")
-        print(traceback.format_exc())
-        messages.error(request, f"Erro de banco de dados: {e}")
 
 
         return redirect('funcionarios:menu_usuarios')
