@@ -64,34 +64,23 @@ def login_view(request):
 #@permission_required('funcionarios.cadastrar_funcionarios', raise_exception=True)
 def cadastrar_funcionarios(request, cbo=None):
     try:
-
-        #messages.info("iniciando processo de cadastro de funcionário...")
-        print("iniciando criação de funcionarios...")
-
-        cbo_gerado = obter_proximo_cbo()
         tarefa_enfileirada = False #Variável para rastrear se a tarefa será enfileirada
-        print(f"próximo id gerado: {cbo_gerado}" )
 
         #Criação ou Edição de Funcionários     
         if cbo:
             funcionario = get_object_or_404(Funcionario, cbo=cbo)
             form_funcionario = FuncionarioForm(request.POST or None, instance=funcionario)
-            print(f"editando usuário existente {funcionario.nome}")
         else:
             form_funcionario = FuncionarioForm(request.POST)
 
 
-        print(f"dados recebidos: {request.POST}")
         if request.method == 'POST':
-            print("criando novo usuário")
+
             if form_funcionario.is_valid():
-                print("formulário é valido")
                 funcionario = form_funcionario.save(commit=False)
-                print(f"funcionario cadastrados: {funcionario.nome}")
                 
                 if not funcionario.cbo:
                     funcionario.cbo = obter_proximo_cbo()
-                    print(f"cbo gerado: {funcionario.cbo}")
 
                 funcionario.save()
                 print(f"dados do funcionario salvo: {funcionario.nome} {funcionario.cbo} {funcionario.data_nascimento}") 
@@ -243,10 +232,8 @@ def menu_cadastros(request):
 def criar_usuario(request, id_usuario=None):
 
     try:
-        messages.info("iniciando processo de criação de usuário...")
         
         idUsu_gerado = obter_proximo_idUSu()
-        messages.info(f"próximo id gerado: {idUsu_gerado}")
 
         if id_usuario:
             usuario = get_object_or_404(UsuarioBasico, id_usuario=id_usuario)
@@ -254,11 +241,9 @@ def criar_usuario(request, id_usuario=None):
 
         else:
             form_usuario = UsuarioForm(request.POST or None)
-            messages.info("criando novo usuário")
 
         if request.method == 'POST':
             if form_usuario.is_valid():
-                messages.info(f"formulário valido")
                 usuario = form_usuario.save(commit=False)
 
                 if not usuario.id_usuario:
@@ -269,7 +254,6 @@ def criar_usuario(request, id_usuario=None):
 
                 usuario.save()
                 print(f"{usuario.usuario} salvo com sucesso!")
-                messages.success(request, "Usuário criado com sucesso!")
                 return redirect('funcionarios:menu_usuarios')
             else:
                 messages.error(request, "Erro ao criar usuário.")
@@ -297,12 +281,13 @@ def menu_usuarios(request):
     logging.info(usuarios)
     return render(request, 'admin/menu_usuarios.html', {'usuarios': usuarios})
 
-
-#@verificar_permissaoAcesso
-def menu_usuarios(request):
-    usuarios = UsuarioBasico.objects.all()
-    return render(request, 'admin/menu_usuarios.html', {'usuarios': usuarios})
-
+def excluir_usuario(request, id_usuario):
+    if request.method == "POST":
+        usuario = get_object_or_404(UsuarioBasico, id_usuario=id_usuario)
+        usuario.delete()
+        reorganizar_idUSu()
+        messages.success(request, "Usuário excluído com sucesso.")
+    return redirect('funcionarios:menu_usuarios')
 
 def logout_and_redirect(request):
     logout(request)

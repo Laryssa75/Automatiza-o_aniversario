@@ -23,12 +23,12 @@
                 <form method="POST" action="{% url 'funcionarios:excluir_funcionario' funcionario.cbo %}">
                     {% csrf_token %}
                     <button 
+                        type="submit" 
+                        class="btn btn-danger">Excluir Cadastro</button>
+                    <button 
                         type="button" 
                         class="btn btn-secondary" 
                         data-bs-dismiss="modal">Fechar</button>
-                    <button 
-                        type="submit" 
-                        class="btn btn-danger">Excluir Cadastro</button>
                 </form>
             </div>
         </div>

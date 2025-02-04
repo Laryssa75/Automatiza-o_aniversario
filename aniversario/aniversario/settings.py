@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # 'fontawesomefree',
     #'django_rq',
 
     #Apps do projeto
@@ -60,7 +61,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
-            BASE_DIR, 'templates',
+            BASE_DIR, 'funcionarios/templates',
         ],
         'APP_DIRS': True,
         'OPTIONS': {

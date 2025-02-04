@@ -15,4 +15,5 @@ urlpatterns = [
     #path('enviar-email-aniversariantes/', views.enviar_emails_aniversariantes_view, name='enviar_emails_aniversariantes'),
     path('admin/criar-usuario/', views.criar_usuario, name='criar_usuario'),
     path('admin/menu-usuarios/', views.menu_usuarios, name='menu_usuarios'),
+    path('admin/excluir-usuario/<int:id_usuario>/', views.excluir_usuario, name='excluir_usuario'),
 ]
