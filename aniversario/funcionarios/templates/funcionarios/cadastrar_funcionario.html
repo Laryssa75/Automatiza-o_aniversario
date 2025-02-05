@@ -25,6 +25,13 @@
             <div class="col-lg-6 col-md-8 col-sm-12 mx-auto">
                 <h2 class="text-center mb-4">Cadastro de Funcionarios</h2>
 
+                <!--Modais-->
+                {% if erro_funcionario %}
+                    <div class="alert alert-danger" role="alert">
+                        {{ erro_funcionario }}
+                    </div>
+                {% endif %}
+
                 <!-- Formulario de Preenchimento Manual -->
                 <form method="POST" 
                     action="{% if form_funcionario.instance.cbo %}{% url 'funcionarios:editar_funcionarios' form_funcionario.instance.cbo %}{% else %}{% url 'funcionarios:cadastrar_funcionarios' %}{% endif %}">
@@ -35,17 +42,6 @@
                         {% else %}
                             <h3 class="text-center mb-4">Novo Funcionario</h3>
                         {% endif %}
-              
-                    <!-- CBO -->
-                    <div class="mb-3">
-                        <label for="cbo" class="form-label">CBO</label>
-                        {% if form_funcionario.instance.cbo %}
-                            <h4 class="form-label fw-normal">{{ form_funcionario.instance.cbo }}</h4>
-                        {% else %}
-                            <input type="hidden" name="cbo" value="{{ cbo_gerado }}" readonly>
-                            <h4 class="form-label fw-normal">{{ cbo_gerado }}</h4>
-                        {% endif %}
-                        </div>
                     
                     <!-- Nome -->
                     <div class="mb-3">
@@ -102,15 +98,15 @@
                         {% endif %}
                     </div>
 
-                    <!--Data de Admissão-->
+                    <!--Data de Inclusão-->
                     <div class="mb-3">
-                        <label for="{{ form_funcionario.data_admissao.id_for_label }}" class="form-label">Data de Admissão</label>
+                        <label for="{{ form_funcionario.data_admissao.id_for_label }}" class="form-label">Data de Inclusão</label>
                         <input 
                             type="date" 
                             name="data_admissao" 
                             id="id_data_admissao" 
                             class="form-control" 
-                            value="{{ form_funcionario.data_admissao.value|date:'Y-m-d' }}"
+                            value="{{ form_funcionario.data_admissao.value|default:data_atual|date:'Y-m-d' }}"
                             placeholder="dd/mm/aaaa">
                         {% if form_funcionario.data_admissao.errors %}
                         <div class="text-danger small">
@@ -232,7 +228,10 @@
         }
     });
 
+    
 </script>
+
+{% include 'modals/modal_informativo.html' %}
 
 </body>
 </html>

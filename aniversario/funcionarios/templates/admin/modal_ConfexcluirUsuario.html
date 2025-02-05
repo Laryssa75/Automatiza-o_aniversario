@@ -21,7 +21,7 @@
                 Esta ação não pode ser desfeita.
             </div>
             <div class="modal-footer">
-                <form method="POST" action="{% url 'funcionarios:excluir_usuario' usuario.id_usuario %}">
+                <form method="POST" action="{% url 'funcionarios:excluir_usuario' nome_usuario=usuario.usuario %}">
                     {% csrf_token %}
                     <button
                         type="submit"

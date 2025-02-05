@@ -11,9 +11,8 @@ from django.db.utils import IntegrityError
 from .models import Funcionario, UsuarioBasico
 from .forms import FuncionarioForm, UploadExcelForm, UsuarioForm, LoginAcessoForm
 from .tasks import enviar_email_aniversario
-from .utils import obter_proximo_cbo, reorganizar_cbo, obter_proximo_idUSu, reorganizar_idUSu
+from .utils import obter_proximo_cbo, obter_proximo_idUSu
 from .decorators import verificar_permissaoAcesso
-import traceback
 
 #serve para disparar envio de email manualmente
 # async def enviar_emails_aniversariantes_view(request):
@@ -25,6 +24,7 @@ logger = logging.getLogger(__name__)
 def home(request):
     #return HttpResponse("Página inicial do app funcionários")
     return render(request, 'funcionarios/home.html')
+
 
 
 def login_view(request):
@@ -63,55 +63,55 @@ def login_view(request):
 
 #@permission_required('funcionarios.cadastrar_funcionarios', raise_exception=True)
 def cadastrar_funcionarios(request, cbo=None):
-    try:
-        tarefa_enfileirada = False #Variável para rastrear se a tarefa será enfileirada
+    funcionario = None
+    erro_funcionario = None
 
-        #Criação ou Edição de Funcionários     
-        if cbo:
+    tarefa_enfileirada = False #Variável para rastrear se a tarefa será enfileirada
+      
+    if cbo:
+        try:
             funcionario = get_object_or_404(Funcionario, cbo=cbo)
-            form_funcionario = FuncionarioForm(request.POST or None, instance=funcionario)
+        except Funcionario.DoesNotExist:
+            erro_funcionario = "Funcionário não encontrado!"
+    
+    form_funcionario = FuncionarioForm(request.POST or None, instance=funcionario)
+
+
+    if request.method == "POST" and form_funcionario.is_valid():
+
+        if form_funcionario.is_valid():
+            funcionario = form_funcionario.save(commit=False)
+            
+            if not funcionario.cbo:
+                funcionario.cbo = obter_proximo_cbo()
+
+            funcionario.save()
+            messages.success(request, "Funcionário criado com sucesso!")
+            tarefa_enfileirada = True
+            return redirect('funcionarios:menu_cadastros')
         else:
-            form_funcionario = FuncionarioForm(request.POST)
+            # form_funcionario = FuncionarioForm(initial={'cbo': cbo})
+            messages.error(request, "Erro ao criar funcionário.")
+            print("erros no formulário", form_funcionario.errors)
 
+            #Chama a tarefa celery para envio de email de aniversario
+            #enviar_email_aniversario.apply_async()
+            #return redirect('funcionarios:cadastrar_funcionarios')
 
-        if request.method == 'POST':
+    if erro_funcionario:
+        messages.error(request, erro_funcionario)
+            
+    # ** Enfileira a tarefa após as operações de criação **
+    if tarefa_enfileirada:
+        enviar_email_aniversario.apply_async()
 
-            if form_funcionario.is_valid():
-                funcionario = form_funcionario.save(commit=False)
-                
-                if not funcionario.cbo:
-                    funcionario.cbo = obter_proximo_cbo()
-
-                funcionario.save()
-                print(f"dados do funcionario salvo: {funcionario.nome} {funcionario.cbo} {funcionario.data_nascimento}") 
-                messages.success(request, "Funcionário criado com sucesso!")
-                tarefa_enfileirada = True
-                return redirect('funcionarios:menu_cadastros')
-            else:
-                # form_funcionario = FuncionarioForm(initial={'cbo': cbo})
-                messages.error(request, "Erro ao criar funcionário.")
-                print("erros no formulário", form_funcionario.errors)
-
-                #return redirect('funcionarios:cadastrar_funcionarios')
-
-                #Chama a tarefa celery para envio de email de aniversario
-                #enviar_email_aniversario.apply_async()
-                
-        # ** Enfileira a tarefa após as operações de criação **
-        if tarefa_enfileirada:
-            enviar_email_aniversario.apply_async()
-
-        contexto = {
-            'form_funcionario': form_funcionario, 
-            'cbo_gerado': obter_proximo_cbo(),
-            'erros_form': form_funcionario.errors 
-        }
-        return render(request, 'funcionarios/cadastrar_funcionario.html', contexto)
-
-    except ValueError as e:
-        print(f"erro de validação: {e}")
-        messages.error(request, f"erro de validação {e}")
-
+    contexto = {
+        'form_funcionario': form_funcionario, 
+        'cbo_gerado': obter_proximo_cbo(),
+        'erro_funcionario': erro_funcionario,
+        'data_atual': timezone.now().date(), 
+    }
+    return render(request, 'funcionarios/cadastrar_funcionario.html', contexto)
 
 
 def cadastrar_funcionarioExcel(request, cbo=None):
@@ -126,7 +126,7 @@ def cadastrar_funcionarioExcel(request, cbo=None):
         form_import = UploadExcelForm(request.POST or None, instance=funcionario)
 
     #Se for envio de dados via arquivo excel
-    if 'import' in request.POST and request.FILES.get('excel_file'):
+    if request.method == "POST" and request.FILES.get('excel_file'):
                 form_import = UploadExcelForm(request.POST, request.FILES)
                 if form_import.is_valid():
                     excel_file = request.FILES['excel_file']
@@ -175,7 +175,6 @@ def cadastrar_funcionarioExcel(request, cbo=None):
     return render(request, 'funcionarios/cadastrar_funcionario.html', contexto)
 
 
-
 def editar_funcionarios(request, cbo):
     # Busca o funcionário com o 'cbo' fornecido
     funcionario = get_object_or_404(Funcionario, cbo=cbo)
@@ -211,18 +210,18 @@ def editar_funcionarios(request, cbo):
     #     })
 
 
-def excluir_funcionario(request, cbo):
+def excluir_funcionario(request, nome_funcionario):
     if request.method == "POST":
-        funcionario = get_object_or_404(Funcionario, cbo=cbo)
+        funcionario = get_object_or_404(Funcionario, nome=nome_funcionario)
         funcionario.delete()
-        reorganizar_cbo()
         messages.success(request, "Funcionário excluído com sucesso.")
+        print(f"Funcionário {funcionario.nome} excluído com sucesso.")
     return redirect('funcionarios:menu_cadastros')
 
 
 def menu_cadastros(request):
     #Buscar todos os funcionáris cadastrados
-    funcionarios = Funcionario.objects.all()
+    funcionarios = Funcionario.objects.all().order_by('data_admissao')
     print(funcionarios)
     logging.info(funcionarios)
     return render(request, 'funcionarios/cadastros.html', {'funcionarios' : funcionarios})
@@ -230,62 +229,58 @@ def menu_cadastros(request):
 
 #@verificar_permissaoAcesso
 def criar_usuario(request, id_usuario=None):
+    usuario = None
+    erro_usuario = None
 
-    try:
-        
-        idUsu_gerado = obter_proximo_idUSu()
+    idUsu_gerado = obter_proximo_idUSu()
 
-        if id_usuario:
+    if id_usuario:
+        try:
             usuario = get_object_or_404(UsuarioBasico, id_usuario=id_usuario)
-            form_usuario = UsuarioForm(request.POST or None, instance=usuario)
+        except UsuarioBasico.DoesNotExist:
+            erro_usuario = "Usuário não encontrado!"
 
-        else:
-            form_usuario = UsuarioForm(request.POST or None)
+    form_usuario = UsuarioForm(request.POST or None, instance=usuario)
 
-        if request.method == 'POST':
-            if form_usuario.is_valid():
-                usuario = form_usuario.save(commit=False)
 
-                if not usuario.id_usuario:
-                    usuario.id_usuario = obter_proximo_idUSu() #Atribui o próximo n de idUsu
-            
-                if form_usuario.cleaned_data.get('password'):
-                    usuario.set_password(form_usuario.cleaned_data['password'])
+    if request.method == 'POST':
+        if form_usuario.is_valid():
+            usuario = form_usuario.save(commit=False)
 
-                usuario.save()
-                print(f"{usuario.usuario} salvo com sucesso!")
-                return redirect('funcionarios:menu_usuarios')
-            else:
-                messages.error(request, "Erro ao criar usuário.")
-                print(f"formulário inválido. Erros: ", form_usuario.errors)
+            if not usuario.id_usuario:
+                usuario.id_usuario = obter_proximo_idUSu() #Atribui o próximo n de idUsu
         
-        contexto = {
-            'form_usuario': form_usuario,
-            'idUsu_gerado': obter_proximo_idUSu(),
-            'data_atual': timezone.now().date(),
-        }
+            if form_usuario.cleaned_data.get('password'):
+                usuario.set_password(form_usuario.cleaned_data['password'])
 
-        return render(request, 'admin/criar_usuario.html', contexto)
-    except Exception as e:
-        print(f"Erro de validação {e}")
-        messages.error(request, f"Erro ao criar usuário: {e}")
+            usuario.save()
+            print(f"{usuario.usuario} salvo com sucesso!")
+            return redirect('funcionarios:menu_usuarios')
+        else:
+            messages.error(request, "Erro ao criar usuário.")
+            print(f"formulário inválido. Erros: ", form_usuario.errors)
+    
+    contexto = {
+        'form_usuario': form_usuario,
+        'idUsu_gerado': obter_proximo_idUSu(),
+        'data_atual': timezone.now().date(),
+        'erro_usuario': erro_usuario,
+    }
 
-
-        return redirect('funcionarios:menu_usuarios')
+    return render(request, 'admin/criar_usuario.html', contexto)
 
 
 def menu_usuarios(request):
     #Busca todos os funcionários cadastrados
-    usuarios = UsuarioBasico.objects.all()
+    usuarios = UsuarioBasico.objects.all().order_by('data_criarUsu')
     print(usuarios)
     logging.info(usuarios)
     return render(request, 'admin/menu_usuarios.html', {'usuarios': usuarios})
 
-def excluir_usuario(request, id_usuario):
+def excluir_usuario(request, nome_usuario):
     if request.method == "POST":
-        usuario = get_object_or_404(UsuarioBasico, id_usuario=id_usuario)
+        usuario = get_object_or_404(UsuarioBasico, usuario = nome_usuario)
         usuario.delete()
-        reorganizar_idUSu()
         messages.success(request, "Usuário excluído com sucesso.")
     return redirect('funcionarios:menu_usuarios')
 

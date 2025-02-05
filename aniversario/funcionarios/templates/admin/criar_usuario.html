@@ -24,15 +24,6 @@
                     {% csrf_token %}
 
                     <div class="mb-3">
-                        <label for="id_usuario" class="form-label">ID</label>
-                        {% if form_usuario.instance.id_usuario %}
-                            <h4 class="form-label fw-normal">{{ form_usuario.instance.id_usuario }}</h4>
-                        {% else %}
-                            <h4 class="form-label fw-normal">{{ idUsu_gerado }}</h4>
-                        {% endif %}
-                    </div>
-
-                    <div class="mb-3">
                         <label for="{{ form_usuario.usuario.id_for_label }}" class="form-label">Usuario*</label>
                         <input 
                         type="text" 

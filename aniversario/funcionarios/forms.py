@@ -6,12 +6,9 @@ class FuncionarioForm(forms.ModelForm):
     class Meta:
         model = Funcionario
         fields = ['nome', 'email', 'data_nascimento', 'data_admissao', 'funcao']
-       
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if 'cbo' in self.fields:
-            self.fields['cbo'].widget.attrs['readonly'] = True
-    
+        widget =  {
+            'data_admissao': forms.DateInput(attrs={'type': 'date'})
+        }
 
     email = forms.EmailField(
         widget=forms.EmailInput(
@@ -72,17 +69,11 @@ class UsuarioForm(forms.ModelForm):
             'data_criarUsu': forms.DateInput(attrs={'type': 'date'}),
         }
 
-    #torna o campo id_usuario somente leitura
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if 'id_usuario' in self.fields:
-            self.fields['id_usuario'].widget.attrs['readonly'] = True
-
     def clean_password(self):
         password = self.cleaned_data.get("password")
         if len(password) < 3:
             print("a senha deve ter pelo menos 3 caracteres")
-            raise forms.ValidationError("A senha deve ter pelo menos 15 caracteres.")
+            raise forms.ValidationError("A senha deve ter pelo menos 3 caracteres.")
         # Adicione validações extras se necessário
         return password
 

@@ -19,15 +19,7 @@ def obter_proximo_cbo():
 
     #Se não houver lacunas, retorna o próximo número após o maior
     return cbos_existentes[-1] + 1 
-
-def reorganizar_cbo():
-    #Obtem todos os funcionários ordenados por cbo
-    funcionario = Funcionario.objects.all().order_by('cbo')
-
-    #Atualiza o número de cbo de forma sequencial
-    for index, funcionario in enumerate(funcionario, start=1):
-        funcionario.cbo = index
-        funcionario.save()
+        
 
 def obter_proximo_idUSu():
     #Obtem todos os números de idUsu existentes
@@ -45,13 +37,3 @@ def obter_proximo_idUSu():
             return idUsu_existente[i - 1] + 1
         
     return idUsu_existente[-1] +1 
-
-
-def reorganizar_idUSu():
-    #obtem todos os usuarios ordenados por idUsu
-    usuario = UsuarioBasico.objects.all().order_by('id_usuario')
-
-    #Atualiza o número de idUsu de forma sequencial
-    for index, usuario in enumerate(usuario, start=1):
-        usuario.id_usuario = index
-        usuario.save()
