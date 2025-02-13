@@ -10,19 +10,9 @@
 </head>
 <body class="btn-lg">
 
-<div class="container d-flex justify-content-center aligh-items-center min-vh-100">
+<div class="container d-flex justify-content-center align-items-center min-vh-100">
     <div class="card-shadow-lg p-4" style="width: 100%; max-width: 400px;">
         <h2 class="text-center mb-4">Login</h2>
-
-        <!--Exibindo mensagem de erro-->
-        <!-- {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-danger-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
-        {% endif %} -->
 
         <!--Formulário de login-->
         <form method="POST" action="{% url 'funcionarios:login' %}">

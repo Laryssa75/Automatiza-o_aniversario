@@ -26,29 +26,26 @@ def home(request):
     return render(request, 'funcionarios/home.html')
 
 
-
 def login_view(request):
     if request.method == 'POST':
         form_usuario = LoginAcessoForm(request.POST)
 
         if form_usuario.is_valid():
-            # usuario = request.POST.get('usuario')
-            # senha_usuario = request.POST.get('password')
             usuario = form_usuario.cleaned_data["usuario"]
             password = form_usuario.cleaned_data["password"]
 
             user = authenticate(request, username=usuario, password=password)
 
-        if user is not None:
-            login(request, user)
-            if user.is_admin: 
-                return redirect('admin:index') #Redireciona para o painel de admin
-            else:
-                return redirect('funcionarios:cadastrar_funcionarios')  
-        else:        
-            #Caso o login falhe
-            messages.error(request, "Usuário ou senha inválidos.")
-            return render(request, 'funcionarios/login.html') 
+            if user is not None:
+                login(request, user)
+                if user.is_admin: 
+                    return redirect('admin:index') #Redireciona para o painel de admin
+                else:
+                    return redirect('funcionarios:cadastrar_funcionarios')  
+            else:        
+                #Caso o login falhe
+                messages.error(request, "Usuário ou senha inválidos.")
+                return render(request, 'funcionarios/login.html') 
 
     else:
         #caso o método seja GET, cria o formulário vazio
@@ -64,7 +61,6 @@ def login_view(request):
 #@permission_required('funcionarios.cadastrar_funcionarios', raise_exception=True)
 def cadastrar_funcionarios(request, cbo=None):
     funcionario = None
-    erro_funcionario = None
 
     tarefa_enfileirada = False #Variável para rastrear se a tarefa será enfileirada
       
@@ -72,12 +68,12 @@ def cadastrar_funcionarios(request, cbo=None):
         try:
             funcionario = get_object_or_404(Funcionario, cbo=cbo)
         except Funcionario.DoesNotExist:
-            erro_funcionario = "Funcionário não encontrado!"
+            messages.error(request, "Funcionário não encontrado!")
     
     form_funcionario = FuncionarioForm(request.POST or None, instance=funcionario)
 
 
-    if request.method == "POST" and form_funcionario.is_valid():
+    if request.method == "POST":
 
         if form_funcionario.is_valid():
             funcionario = form_funcionario.save(commit=False)
@@ -97,9 +93,6 @@ def cadastrar_funcionarios(request, cbo=None):
             #Chama a tarefa celery para envio de email de aniversario
             #enviar_email_aniversario.apply_async()
             #return redirect('funcionarios:cadastrar_funcionarios')
-
-    if erro_funcionario:
-        messages.error(request, erro_funcionario)
             
     # ** Enfileira a tarefa após as operações de criação **
     if tarefa_enfileirada:
@@ -108,7 +101,6 @@ def cadastrar_funcionarios(request, cbo=None):
     contexto = {
         'form_funcionario': form_funcionario, 
         'cbo_gerado': obter_proximo_cbo(),
-        'erro_funcionario': erro_funcionario,
         'data_atual': timezone.now().date(), 
     }
     return render(request, 'funcionarios/cadastrar_funcionario.html', contexto)
