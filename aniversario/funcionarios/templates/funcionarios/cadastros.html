@@ -20,7 +20,11 @@
         {% block content %}
         
         <div class="container text-center align-items-center min-vh-100">
-        {% include "funcionarios/modal_Confexclusao.html" %}
+
+        {% for funcionario in funcionarios %}
+            {% include "modals/modal_ConfirmarExclusao.html" with objeto=funcionario tipo_objeto="funcionario" modal_id=funcionario.cbo url_excluir='funcionarios:excluir_funcionario' %}
+        {% endfor %}
+
         <div class="col-lg-6 col-md-8 col-sm-12 mx-auto">
             <div class="container mt-4">
                 <div class="row w-100">
@@ -101,11 +105,17 @@
         document.querySelectorAll('.confirm-exclusao').forEach(function(button) {
             button.addEventListener('click', function() {
                 const cbo = this.getAttribute('data-cbo');
-                const confirmButton = document.querySelector(`#confirmDeleteButton${cbo}`);
+                const confirmButton = document.querySelector(`#confirmDeleteModal${cbo} form`);
                 
                 // Limpa eventos anteriores para evitar duplicação
-                confirmButton.replaceWith(confirmButton.cloneNode(true));
-                confirmButton.addEventListener('click', function() {
+                // confirmButton.replaceWith(confirmButton.cloneNode(true));
+                // confirmButton.addEventListener('click', function() {
+                    
+                //adiciona o evento de submit dentro do formulario
+                form.addEventListener('submit', function(e){
+                    e.preventDefault(); //previne o envio imediato do formulário
+             
+                    
                     fetch(`/excluir-funcionario/${cbo}/`, {
                         method: 'POST',
                         headers: {

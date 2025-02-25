@@ -1,0 +1,41 @@
+<!--Modal global para confirmação de exclusão-->
+<div class="modal fade"
+    id="confirmDeleteModal{{ modal_id }}"
+    tabindex="-1"
+    aria-labelledby="modalExclusaoLabel{{ modal_id }}"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalExclusaoLabel{{ modal_id }}">Confirmar Exclusão</h5>
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Fechar">
+                </button>
+            </div>
+            <div class="modal-body">
+                Tem certeza de que deseja excluir <strong>{{ objeto.nome }}</strong>?
+                Esta ação não pode ser desfeita.
+            </div>
+            <div class="modal-footer">
+                <form method="POST" action="
+                    {% if tipo_objeto == 'funcionario' %}
+                        {% url url_excluir nome_funcionario=objeto.nome %}
+                    {% else %}
+                        {% url url_excluir nome_usuario=objeto.usuario %}
+                    {% endif %}">
+                    {% csrf_token %}
+                    <button
+                        type="submit"
+                        class="btn btn-danger">Excluir Cadastro</button>
+                    <button
+                    type="submit"
+                    class="btn btn-secondary"
+                    data-bs-dismiss="modal">Fechar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

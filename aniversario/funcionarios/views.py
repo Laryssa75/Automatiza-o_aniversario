@@ -7,6 +7,7 @@ from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db import models
 from django.utils import timezone
+from urllib.parse import unquote
 from django.db.utils import IntegrityError
 from .models import Funcionario, UsuarioBasico
 from .forms import FuncionarioForm, UploadExcelForm, UsuarioForm, LoginAcessoForm
@@ -203,6 +204,7 @@ def editar_funcionarios(request, cbo):
 
 
 def excluir_funcionario(request, nome_funcionario):
+    nome_funcionario = unquote(nome_funcionario)
     if request.method == "POST":
         funcionario = get_object_or_404(Funcionario, nome=nome_funcionario)
         funcionario.delete()
@@ -270,6 +272,7 @@ def menu_usuarios(request):
     return render(request, 'admin/menu_usuarios.html', {'usuarios': usuarios})
 
 def excluir_usuario(request, nome_usuario):
+    nome_usuario = unquote(nome_usuario)
     if request.method == "POST":
         usuario = get_object_or_404(UsuarioBasico, usuario = nome_usuario)
         usuario.delete()

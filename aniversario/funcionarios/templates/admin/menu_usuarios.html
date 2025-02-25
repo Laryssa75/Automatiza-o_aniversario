@@ -18,7 +18,9 @@
     
     {% block content %}
     <div class="container text-center align-items-center min-vh-100">
-    {% include "admin/modal_ConfexcluirUsuario.html" %}
+    {% for usuario in usuarios %}
+        {% include "modals/modal_ConfirmarExclusao.html" with objeto=usuario tipo_objeto="usuario" modal_id=usuario.id_usuario url_excluir='funcionarios:excluir_usuario' %}
+    {% endfor %}
     <div class="col-lg-6 col-md-8 col-sm-12 mx-auto">
         <div class="container mt-4">
             <div class="row w-100">
@@ -70,7 +72,8 @@
                                 <button type="button"
                                     class="btn btn-danger btn-sm confirm-exclusao"
                                     data-bs-toggle="modal"
-                                    data-bs-target="#confirmDeleteModalUsu{{ usuario.id_usuario}}"
+                                    data-bs-target="#confirmDeleteModal{{ usuario.id_usuario}}"
+                                    data-id_usuario="{{ usuario.id_usuario }}"
                                     title="Excluir">
                                     <i class="fas fa-trash" style="font-size: 20px;"></i>
                                 </button>
@@ -106,6 +109,48 @@
         });
     });
     </script> -->
+
+    <script>
+        document.querySelectorAll('.confirm-exclusao').forEach(function(button) {
+            button.addEventListener('click', function() {
+                const id_usuario = this.getAttribute('data-id_usuario');
+                // const confirmButton = document.querySelector(`#confirmDeleteModalUsu${id_usuario} form`);
+                const confirmButton = document.querySelector(`#confirmDeleteModal${id_usuario} form`);
+                
+                //adiciona o evento de submit dentro do formulario
+                form.addEventListener('submit', function(e){
+                    e.preventDefault(); //previne o envio imediato do formulário
+             
+                    
+                    fetch(`/excluir-usuario/${id_usuario}/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                        },
+                        body: JSON.stringify({ id_usuario: id_usuario })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'ok') {
+                            alert('Cadastro excluído com sucesso!');
+                            document.getElementById('cadastro-' + id_usuario).remove();
+                        } else {
+                            alert('Erro ao excluir item.');
+                        }
+                    })
+                    .catch(err => {
+                        alert('Erro ao enviar requisição.');
+                    });
+
+                    // Fechar o modal corretamente
+                    const modal = bootstrap.Modal.getInstance(document.getElementById(`confirmDeleteModal${cbo}`));
+                    modal.hide();
+                });
+            });
+        });
+    </script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-Mr44Flw8zFJ9hbHYk+sRUpPLcURJoGZTmfC+ZrPcSjqkjtF64Wl9wBvtDLZ2ZwP4" crossorigin="anonymous"></script>
 

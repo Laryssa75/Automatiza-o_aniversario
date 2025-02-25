@@ -11,9 +11,9 @@ urlpatterns = [
     path('cadastrar-funcionarios/', views.cadastrar_funcionarios, name='cadastrar_funcionarios'),
     path('editar-funcionarios/<int:cbo>/', views.editar_funcionarios, name='editar_funcionarios'),
     path('menu-cadastros/', views.menu_cadastros, name='menu_cadastros'),
-    path('excluirfuncionario/<str:nome_funcionario>/', views.excluir_funcionario, name='excluir_funcionario'),
+    path('excluirfuncionario/<path:nome_funcionario>/', views.excluir_funcionario, name='excluir_funcionario'),
     #path('enviar-email-aniversariantes/', views.enviar_emails_aniversariantes_view, name='enviar_emails_aniversariantes'),
     path('admin/criar-usuario/', views.criar_usuario, name='criar_usuario'),
     path('admin/menu-usuarios/', views.menu_usuarios, name='menu_usuarios'),
-    path('admin/excluir-usuario/<str:nome_usuario>/', views.excluir_usuario, name='excluir_usuario'),
+    path('admin/excluir-usuario/<path:nome_usuario>/', views.excluir_usuario, name='excluir_usuario'),
 ]
