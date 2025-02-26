@@ -279,6 +279,32 @@ def excluir_usuario(request, nome_usuario):
         messages.success(request, "Usuário excluído com sucesso.")
     return redirect('funcionarios:menu_usuarios')
 
+def editar_usuario(request, id_usuario):
+    #Buscar o usuário com o 'id_usuario' fornecido
+    usuario = get_object_or_404(UsuarioBasico, id_usuario=id_usuario)
+    print(f"Dados do usuário: {usuario.usuario}, {usuario.perfil}, {usuario.id_usuario}")
+
+    if request.method == 'POST':
+        form_editar = UsuarioForm(request.POST, instance=usuario)
+
+        if form_editar.is_valid():
+            form_editar.save()
+            messages.success(request, "Usuario alterado com sucesso.")
+            return redirect('funcionarios:menu_usuarios')
+        else:
+            messages.error(request, "Falha ao editar o cadastro do usuário.")
+            print(f"Erros ao editar: {form_editar.errors}")
+
+    else:
+        #Se for um GET, cria o formulário com os dados do usuário
+        form_editar = UsuarioForm(instance=usuario)
+
+    #Retorna o formulário no caso de GET ou erro de validação
+    return render(request, 'admin/criar_usuario.html', {
+        'form_usuario': form_editar,
+        'data_atual': timezone.now().date(),
+    })
+
 def logout_and_redirect(request):
     logout(request)
     #return render (request, 'funcionarios/login.html') #esse caminho faz o caminho para o template login.html

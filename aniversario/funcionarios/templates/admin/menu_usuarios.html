@@ -77,6 +77,14 @@
                                     title="Excluir">
                                     <i class="fas fa-trash" style="font-size: 20px;"></i>
                                 </button>
+
+                                <!--Botão de editar usuário-->
+                                <a href="{% url 'funcionarios:editar_usuario' usuario.id_usuario %}"
+                                    class="btn btn-primary btn-sm aligh-items-center custom-button"
+                                    title="Editar">
+                                    <i class="fa-solid fa-pencil" style="font-size:  20px;"></i>
+                                </a>
+                                
                             </td>
                         </tr>
                         {% empty %}
