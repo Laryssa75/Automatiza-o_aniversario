@@ -17,7 +17,6 @@
 
     <!--Container invisível para armazenar mensagens-->
     <div id="messagesContainer" data-messages="{% for message in messages %}{{ message|escapejs }}{% if not forloop.last %}|||{% endif %}{% endfor %}"></div>
-    <!--ajustar depois esse container de mensagens-->
 
     <div class="container d-flex justify-content-center align-items-center min-vh-70">
         {% include "funcionarios/modal_ConfUpload.html" %}
