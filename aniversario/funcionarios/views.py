@@ -5,6 +5,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponse
 from django.db import models
 from django.utils import timezone
 from urllib.parse import unquote
@@ -305,7 +306,22 @@ def editar_usuario(request, id_usuario):
         'data_atual': timezone.now().date(),
     })
 
+
 def logout_and_redirect(request):
     logout(request)
     #return render (request, 'funcionarios/login.html') #esse caminho faz o caminho para o template login.html
     return redirect('funcionarios:login') #esse caminho faz o redirecionamento da url
+
+def salvar_permissoes(request):
+    if request.method == "POST":
+        try:
+            funcoes_permitidas = request.POST.getlist("funcoes_permitidas")
+            usuario = UsuarioBasico.objects.get(id=request.POST.get("id_usuario"))
+            print(f'funcoes permitidas: {funcoes_permitidas}')
+            usuario.permissoes.set(funcoes_permitidas)
+            usuario.save()
+
+            # Redirecionar após sucesso
+            #return redirect('alguma_view')
+        except UsuarioBasico.DoesNotExist:
+            return HttpResponse("Usuário não encontrado", status=404)

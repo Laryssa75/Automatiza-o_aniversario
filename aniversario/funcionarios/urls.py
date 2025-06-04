@@ -17,4 +17,5 @@ urlpatterns = [
     path('admin/menu-usuarios/', views.menu_usuarios, name='menu_usuarios'),
     path('admin/excluir-usuario/<path:nome_usuario>/', views.excluir_usuario, name='excluir_usuario'),
     path('admin/editar-usuario/<int:id_usuario>/', views.editar_usuario, name='editar_usuario'),
+    path('admin/salvar_permissoes/', views.salvar_permissoes, name='salvar_permissoes'),
 ]
